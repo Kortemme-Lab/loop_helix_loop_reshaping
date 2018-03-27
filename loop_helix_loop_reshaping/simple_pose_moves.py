@@ -60,3 +60,23 @@ def mutate_residues(pose, res_list, aa_list):
         mutater.set_res_name(name)
         mutater.set_target(res_list[i])
         mutater.apply(pose)
+
+def mutate_pose_to_single_AA(pose, aa_name, keep_aa=['GLY', 'PRO']):
+    '''Mutate the residues in a pose to a single type of AA.
+    Keep the residues in the keep_aa list.
+    '''
+    for i in range(1, pose.size() + 1):
+        if (not pose.residue(i).is_protein()) or pose.residue(i).name3() in keep_aa:
+            continue
+
+        mutate_residues(pose, [i], [aa_name])
+
+def apply_linker(pose, linker, start):
+    '''Apply a linker to a pose.'''
+    
+    for i in range(len(linker['phis'])):
+        seqpos = start + i
+        pose.set_phi(seqpos, linker['phis'][i]) 
+        pose.set_psi(seqpos, linker['psis'][i]) 
+        pose.set_omega(seqpos, linker['omegas'][i])
+

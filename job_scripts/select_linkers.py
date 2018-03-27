@@ -21,7 +21,10 @@ def select_and_dump_linkers(input_pdb, input_database, output_database, linker_l
     with open(input_database, 'r') as f:
         candidate_linkers = json.load(f)
 
-    selected_linkers = LHLR.select_linkers.select_non_clashing_linkers(pose, candidate_linkers, lhl_start)
+    if front_linker:
+        selected_linkers = LHLR.select_linkers.select_non_clashing_linkers(pose, candidate_linkers, lhl_start)
+    else:
+        selected_linkers = LHLR.select_linkers.select_non_clashing_linkers(pose, candidate_linkers, lhl_start + 1)
     
     with open(output_database, 'w') as f:
         json.dump(selected_linkers, f)

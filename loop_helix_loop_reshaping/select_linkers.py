@@ -29,22 +29,9 @@ def prepare_linker_selection(pose, linker_length, lhl_start, lhl_stop, front_lin
 
     # Mutate the pose
 
-    for i in range(1, pose.size() + 1):
-        if (not pose.residue(i).is_protein()) or pose.residue(i).name3() in ['GLY', 'PRO']:
-            continue
-
-        simple_pose_moves.mutate_residues(pose, [i], ['ALA'])
+    simple_pose_moves.mutate_pose_to_single_AA(pose, 'ALA')
 
     rosetta.core.pose.correctly_add_cutpoint_variants(pose)
-
-def apply_linker(pose, linker, start):
-    '''Apply a linker to a pose.'''
-    
-    for i in range(len(linker['phis'])):
-        seqpos = start + i
-        pose.set_phi(seqpos, linker['phis'][i]) 
-        pose.set_psi(seqpos, linker['psis'][i]) 
-        pose.set_omega(seqpos, linker['omegas'][i])
 
 def select_non_clashing_linkers(pose, candidate_linkers, linker_start):
     '''Select linkers that do not clash with the scaffold.
@@ -52,13 +39,13 @@ def select_non_clashing_linkers(pose, candidate_linkers, linker_start):
     NOTE: The torsions from linker_start - 1 to linker_start + linker_length
     will be reset.
     '''
-    linker_residues = list(range(linker_start, linker_start + len(candidate_linkers[0]['phis']) - 2))
+    linker_residues = list(range(linker_start - 1, linker_start + len(candidate_linkers[0]['phis']) - 1))
     pose_residues = list(range(1, pose.size() + 1))
 
     selected_linkers = []
 
     for i, linker in enumerate(candidate_linkers):
-        apply_linker(pose, linker, linker_start - 1)
+        simple_pose_moves.apply_linker(pose, linker, linker_start - 1)
 
         if pose_analysis.check_clashes_between_groups(pose, linker_residues, pose_residues):
             selected_linkers.append(linker)
