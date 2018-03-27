@@ -64,7 +64,7 @@ def select_non_clashing_linkers(pose, candidate_linkers, linker_start):
             selected_linkers.append(linker)
 
         if 0 == (i + 1) % 100 or i + 1 == len(candidate_linkers):
-            print 'Tested {0} candidates. Selected {1}/{2} linkers'.format(i + 1, len(selected_linkers), len(candidate_linkers))
+            print 'Tested {0}/{1} candidates. Selected {2} linkers'.format(i + 1, len(candidate_linkers), len(selected_linkers))
 
     return selected_linkers
 
