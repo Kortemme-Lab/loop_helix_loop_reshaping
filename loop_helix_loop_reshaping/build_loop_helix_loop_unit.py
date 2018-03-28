@@ -219,7 +219,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
 
             num_success += 1
             
-def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, output_file, num_jobs=1, job_id=0):
+def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0):
     '''Screen all loop helix loop units and record all possible designs.
     Dump the models to the output_dir. Each modeled will be 
     named model_frontLinkerLength_backLinkerLength_pairID_reshapedRegionStart_reshapedRegionStop.pdb

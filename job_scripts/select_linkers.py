@@ -38,7 +38,7 @@ def select_linkers_for_sfgfp(data_path):
     lhl_start = 124
     lhl_stop = 138
 
-    for linker_length in [4]:
+    for linker_length in [2, 3, 4, 5]:
 
         # Select front linkers
 
