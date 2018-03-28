@@ -1,6 +1,14 @@
 import pyrosetta
 from pyrosetta import rosetta
 
+def remove_cutpoint_variants(pose):
+    '''Remove all cutpoint variants from the pose.'''
+    for i in range(1, pose.size() + 1):
+        rosetta.core.pose.remove_variant_type_from_pose_residue(pose,
+                rosetta.core.chemical.CUTPOINT_LOWER, i)
+        rosetta.core.pose.remove_variant_type_from_pose_residue(pose,
+                rosetta.core.chemical.CUTPOINT_UPPER, i)
+
 def delete_region(pose, start, stop):
     '''Delete a region of the pose.'''
     if stop > pose.size() or start < 1 or start > stop:

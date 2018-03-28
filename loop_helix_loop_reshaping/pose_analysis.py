@@ -2,9 +2,10 @@ import pyrosetta
 from pyrosetta import rosetta
 
 
-def check_clashes_between_groups(pose, residues1, residues2):
+def check_clashes_between_groups(pose, residues1, residues2, ignore_atom_beyond_cb=False):
     '''Return true if residues in two groups do not clash with each other.'''
     scale_factor = 0.36
+    cb_id = 5
 
     for i in residues1:
         res_i = pose.residue(i)
@@ -23,9 +24,12 @@ def check_clashes_between_groups(pose, residues1, residues2):
                 continue
 
             # Detailed check
+            
+            atm_stop_i = min(cb_id, res_i.nheavyatoms()) if ignore_atom_beyond_cb else res_i.nheavyatoms()
+            atm_stop_j = min(cb_id, res_j.nheavyatoms()) if ignore_atom_beyond_cb else res_j.nheavyatoms()
 
-            for ai in range(1, res_i.nheavyatoms() + 1):
-                for aj in range(1, res_j.nheavyatoms() + 1):
+            for ai in range(1, atm_stop_i + 1):
+                for aj in range(1, atm_stop_j + 1):
 
                     vi = res_i.xyz(ai)
                     vj = res_j.xyz(aj)
