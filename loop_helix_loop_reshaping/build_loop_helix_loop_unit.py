@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 import pyrosetta
@@ -28,11 +29,6 @@ def prepare_pose_for_lhl_screen(pose, lhl_start, lhl_stop, front_linker_length, 
 
     simple_pose_moves.insert_alas(pose, lhl_start, back_linker_length + 10, insert_after=False, reset_fold_tree=True)
     simple_pose_moves.insert_alas(pose, lhl_start - 1, front_linker_length + 10, insert_after=True, reset_fold_tree=True)
-
-    # Swith the pose to poly VAL
-
-    simple_pose_moves.mutate_pose_to_single_AA(pose, 'ALA')
-
     rosetta.core.pose.correctly_add_cutpoint_variants(pose)
 
     # Set the appended residues to be helices
@@ -57,18 +53,24 @@ def residue_direction_vector(pose, res):
     '''Return the normalized vector pointing from N to C.'''
     return (pose.residue(res).xyz('C') - pose.residue(res).xyz('N')).normalized()
 
-def trim_helix_and_connect(pose, movable_region_start, movable_region_end, helix_start, helix_end, trim_start, trim_end):
+def trim_helix_and_connect(original_pose, movable_region_start, movable_region_end, helix_start, helix_end, trim_start, trim_end):
     '''Trim a part of a helix and connect the rest of the helix.
     Return true if the connection could be made.
     '''
     # Trim the helix
     
-    simple_pose_moves.delete_region(pose, trim_start, trim_end) 
-    rosetta.core.pose.correctly_add_cutpoint_variants(pose)
+    simple_pose_moves.delete_region(original_pose, trim_start, trim_end) 
+    rosetta.core.pose.correctly_add_cutpoint_variants(original_pose)
 
     movable_region_end -= trim_end - trim_start + 1
     helix_end -= trim_end - trim_start + 1
-   
+  
+    # Make a clone of poly ALA pose for minimization
+
+    pose = original_pose.clone()
+    simple_pose_moves.mutate_pose_to_single_AA(pose, 'ALA')
+    rosetta.core.pose.correctly_add_cutpoint_variants(pose)
+
     # Set hydrogen bond constraints for the helix
 
     pose.constraint_set().clear()
@@ -102,7 +104,7 @@ def trim_helix_and_connect(pose, movable_region_start, movable_region_end, helix
         min_mover.apply(pose)
 
     chainbreak_energy = pose.energies().total_energies()[rosetta.core.scoring.chainbreak] 
-    if chainbreak_energy > 0.1:
+    if chainbreak_energy > 0.2:
         return False
 
     # Minimize without constraints
@@ -110,6 +112,19 @@ def trim_helix_and_connect(pose, movable_region_start, movable_region_end, helix
     sfxn.set_weight(rosetta.core.scoring.base_pair_constraint, 0)
     min_mover.score_function(sfxn)
     min_mover.apply(pose)
+
+    # Check the secondary structure
+
+    dssp_str = rosetta.core.scoring.dssp.Dssp(pose).get_dssp_secstruct()
+    for ss in dssp_str[helix_start - 1: helix_end]:
+        if ss != 'H': return False
+
+    # Apply the torsions to the original_pose
+
+    for i in range(movable_region_start, movable_region_end + 1):
+        original_pose.set_phi(i, pose.phi(i))
+        original_pose.set_psi(i, pose.psi(i))
+        original_pose.set_omega(i, pose.omega(i))
 
     return True
 
@@ -153,7 +168,7 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
         return None
    
     reshaped_region_start = front_linker_start - 1
-    reshaped_region_stop = back_linker_start + back_linker_length - (max_res_pair_direction_dot[1] - max_res_pair_direction_dot[0]) + 1 
+    reshaped_region_stop = back_linker_start + back_linker_length - (max_res_pair_direction_dot[1] - max_res_pair_direction_dot[0]) 
    
     # Check clashes
 
@@ -161,14 +176,12 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
             list(range(1, new_pose.size() + 1)), ignore_atom_beyond_cb=True):
         return None
 
-    new_pose.dump_pdb('debug/test.pdb')
-    exit()
-
     return new_pose, reshaped_region_start, reshaped_region_stop
 
-def screen_loop_helix_loop_units_for_fixed_linker_length(original_pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id):
+def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id):
     '''Screen loop helix loop units for fixed length linkers.
-    Return the torsions of selected lhl units
+    Dump the models to the output_dir. Each modeled will be 
+    named model_frontLinkerLength_backLinkerLength_pairID_reshapedRegionStart_reshapedRegionStop.pdb
     '''
     # Prepare the pose
 
@@ -187,14 +200,30 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(original_pose, lhl_star
 
     # Run the tasks
 
+    num_success = 0
+
     for i, task in enumerate(tasks):
         if job_id == i % num_jobs:
-            test_linker_pairs(pose, front_db[task[0]], back_db[task[1]], front_linker_start, back_linker_start)
+            if (i // num_jobs) % 100 == 0:
+                print 'Built {0} models after screening {1}/{2} pairs of linkers.'.format(num_success, i // num_jobs, len(tasks) // num_jobs + 1) 
+            
+            test_result = test_linker_pairs(pose, front_db[task[0]], back_db[task[1]], 
+                    front_linker_start, back_linker_start)
+            
+            if test_result is None: continue
+                
+            new_pose, reshaped_region_start, reshaped_region_stop = test_result
 
-        print task
+            new_pose.dump_pdb(os.path.join(output_dir, 'model_{0}_{1}_{2}_{3}_{4}.pdb'.format(
+                front_linker_length, back_linker_length, i, reshaped_region_start, reshaped_region_stop)))
 
-def screen_all_loop_helix_loop_units(pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, output_file, num_jobs=1, job_id=0):
-    '''Screen all loop helix loop units and record all possible designs.'''
+            num_success += 1
+            
+def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, output_file, num_jobs=1, job_id=0):
+    '''Screen all loop helix loop units and record all possible designs.
+    Dump the models to the output_dir. Each modeled will be 
+    named model_frontLinkerLength_backLinkerLength_pairID_reshapedRegionStart_reshapedRegionStop.pdb
+    '''
 
     # Do some input checking
 
@@ -205,5 +234,5 @@ def screen_all_loop_helix_loop_units(pose, lhl_start, lhl_stop, front_linker_dbs
     for front_db in front_linker_dbs:
         for back_db in back_linker_dbs:
         
-            screen_loop_helix_loop_units_for_fixed_linker_length(pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id)
+            screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id)
 

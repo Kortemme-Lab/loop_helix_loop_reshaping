@@ -73,6 +73,8 @@ def mutate_pose_to_single_AA(pose, aa_name, keep_aa=['GLY', 'PRO']):
     '''Mutate the residues in a pose to a single type of AA.
     Keep the residues in the keep_aa list.
     '''
+    keep_aa += [aa_name]
+
     for i in range(1, pose.size() + 1):
         if (not pose.residue(i).is_protein()) or pose.residue(i).name3() in keep_aa:
             continue
