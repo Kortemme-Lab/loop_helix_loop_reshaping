@@ -43,13 +43,13 @@ def select_linkers_for_sfgfp(data_path):
         # Select front linkers
 
         input_database = 'database/linker_database/linker_sheet_helix_{0}_non_redundant.json'.format(linker_length)
-        output_database = os.path.join(data_path, 'selected_linkers_{0}_{1}_front.json'.format(lhl_start, lhl_stop))
+        output_database = os.path.join(data_path, 'selected_linkers_{0}_{1}_{2}_front.json'.format(linker_length, lhl_start, lhl_stop))
         select_and_dump_linkers(input_pdb, input_database, output_database, linker_length, lhl_start, lhl_stop, True)
         
         # Select back linkers  
 
         input_database = 'database/linker_database/linker_helix_sheet_{0}_non_redundant.json'.format(linker_length)
-        output_database = os.path.join(data_path, 'selected_linkers_{0}_{1}_back.json'.format(lhl_start, lhl_stop))
+        output_database = os.path.join(data_path, 'selected_linkers_{0}_{1}_{2}_back.json'.format(linker_length, lhl_start, lhl_stop))
         select_and_dump_linkers(input_pdb, input_database, output_database, linker_length, lhl_start, lhl_stop, False)
 
 if __name__ == '__main__':
