@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -34,11 +34,15 @@ def select_and_dump_linkers(input_pdb, input_database, output_database, linker_l
 def select_linkers_for_sfgfp(data_path):
     pyrosetta.init(options='-extra_res_fa test_inputs/CRO.params')
 
-    input_pdb ='test_inputs/sfgfp_modified_from_5dph_cleaned.pdb'
-    lhl_start = 124
-    lhl_stop = 138
+    #input_pdb ='test_inputs/sfgfp_modified_from_5dph_cleaned.pdb'
+    #lhl_start = 124
+    #lhl_stop = 138
+    input_pdb ='test_inputs/1abe_cleaned.pdb'
+    lhl_start = 141
+    lhl_stop = 167
 
-    for linker_length in [2, 3, 4, 5]:
+    #for linker_length in [2, 3, 4, 5]:
+    for linker_length in [4]:
 
         # Select front linkers
 

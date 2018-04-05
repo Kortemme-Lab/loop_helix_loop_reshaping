@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from distutils.core import setup
 
@@ -26,7 +26,7 @@ setup(
     description='PyRosetta scripts for reshaping a part of a protein into a loop-helix-loop unit',
     long_description=open('README.md').read(),
     classifiers=[
-        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
         'Intended Audience :: Science/Research',
     ],
 )

@@ -4,9 +4,9 @@ import numpy as np
 import pyrosetta
 from pyrosetta import rosetta
 
-import simple_pose_moves
-import constraint
-import pose_analysis
+from loop_helix_loop_reshaping import simple_pose_moves
+from loop_helix_loop_reshaping import constraint
+from loop_helix_loop_reshaping import pose_analysis
 
 
 def apply_ideal_helix(pose, start, helix_length):
@@ -92,7 +92,7 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
     # Set the minimization mover
 
     min_opts = rosetta.core.optimization.MinimizerOptions( "lbfgs_armijo_nonmonotone", 0.01, True )
-    min_mover = rosetta.protocols.simple_moves.MinMover()
+    min_mover = rosetta.protocols.minimization_packing.MinMover()
     min_mover.movemap(mm)
     min_mover.min_options(min_opts)
 
@@ -205,7 +205,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
     for i, task in enumerate(tasks):
         if job_id == i % num_jobs:
             if (i // num_jobs) % 100 == 0:
-                print 'Built {0} models after screening {1}/{2} pairs of linkers.'.format(num_success, i // num_jobs, len(tasks) // num_jobs + 1) 
+                print('Built {0} models after screening {1}/{2} pairs of linkers.'.format(num_success, i // num_jobs, len(tasks) // num_jobs + 1)) 
             
             test_result = test_linker_pairs(pose, front_db[task[0]], back_db[task[1]], 
                     front_linker_start, back_linker_start)
@@ -218,6 +218,8 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
                 front_linker_length, back_linker_length, i, reshaped_region_start, reshaped_region_stop)))
 
             num_success += 1
+
+            if num_success > 100:exit()
             
 def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0):
     '''Screen all loop helix loop units and record all possible designs.

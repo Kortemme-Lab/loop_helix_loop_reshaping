@@ -1,8 +1,8 @@
 import pyrosetta
 from pyrosetta import rosetta
 
-import simple_pose_moves
-import pose_analysis
+from loop_helix_loop_reshaping import simple_pose_moves
+from loop_helix_loop_reshaping import pose_analysis
 
 
 def prepare_linker_selection(pose, linker_length, lhl_start, lhl_stop, front_linker):
@@ -51,7 +51,7 @@ def select_non_clashing_linkers(pose, candidate_linkers, linker_start):
             selected_linkers.append(linker)
 
         if 0 == (i + 1) % 100 or i + 1 == len(candidate_linkers):
-            print 'Tested {0}/{1} candidates. Selected {2} linkers'.format(i + 1, len(candidate_linkers), len(selected_linkers))
+            print('Tested {0}/{1} candidates. Selected {2} linkers'.format(i + 1, len(candidate_linkers), len(selected_linkers)))
 
     return selected_linkers
 

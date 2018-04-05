@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -41,6 +41,8 @@ if __name__ == '__main__':
    
     pyrosetta.init(options='-extra_res_fa test_inputs/CRO.params -mute all')
 
-    screen(data_path, 'data/test_linker_selection', 'test_inputs/sfgfp_modified_from_5dph_cleaned.pdb',
-            124, 138, num_jobs, job_id)
+    #screen(data_path, 'data/test_linker_selection', 'test_inputs/sfgfp_modified_from_5dph_cleaned.pdb',
+    #        124, 138, num_jobs, job_id)
 
+    screen(data_path, 'data/test_loop_selection_1abe', 'test_inputs/1abe_cleaned.pdb',
+            141, 167, num_jobs, job_id)

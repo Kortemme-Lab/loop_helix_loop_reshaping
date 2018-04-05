@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.6
 
 '''
 Run jobs for loop-helix-loop reshaping. Before launching this 
