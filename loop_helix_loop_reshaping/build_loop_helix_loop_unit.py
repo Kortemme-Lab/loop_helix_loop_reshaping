@@ -7,6 +7,7 @@ from pyrosetta import rosetta
 from loop_helix_loop_reshaping import simple_pose_moves
 from loop_helix_loop_reshaping import constraint
 from loop_helix_loop_reshaping import pose_analysis
+from loop_helix_loop_reshaping import filters
 
 
 def apply_ideal_helix(pose, start, helix_length):
@@ -213,13 +214,19 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
             if test_result is None: continue
                 
             new_pose, reshaped_region_start, reshaped_region_stop = test_result
+            
+            # Filter by the helix hbond scores
 
-            new_pose.dump_pdb(os.path.join(output_dir, 'model_{0}_{1}_{2}_{3}_{4}.pdb'.format(
-                front_linker_length, back_linker_length, i, reshaped_region_start, reshaped_region_stop)))
+            helix_hb_scores = filters.get_helix_hbond_scores(new_pose, reshaped_region_start + front_linker_length + 1, 
+                    reshaped_region_stop - back_linker_length - 1)
 
-            num_success += 1
+            if len(helix_hb_scores) > 0 and max(helix_hb_scores) < -0.7:
+                output_pdb = 'model_{0}_{1}_{2}_{3}_{4}.pdb'.format(front_linker_length, back_linker_length, i, reshaped_region_start, reshaped_region_stop)
+                new_pose.dump_pdb(os.path.join(output_dir, output_pdb))
+                
+                num_success += 1
 
-            if num_success > 100:exit()
+            if num_success > 100:exit() ###DEBUG
             
 def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0):
     '''Screen all loop helix loop units and record all possible designs.
