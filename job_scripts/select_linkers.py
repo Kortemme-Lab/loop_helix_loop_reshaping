@@ -16,7 +16,7 @@ def select_and_dump_linkers(input_pdb, input_database, output_database, linker_l
 
     LHLR.select_linkers.prepare_linker_selection(pose, linker_length, lhl_start, lhl_stop, front_linker)
 
-    print 'select linkers from', input_database
+    print('select linkers from', input_database)
 
     with open(input_database, 'r') as f:
         candidate_linkers = json.load(f)
@@ -29,7 +29,7 @@ def select_and_dump_linkers(input_pdb, input_database, output_database, linker_l
     with open(output_database, 'w') as f:
         json.dump(selected_linkers, f)
     
-    print 'dump selected linkers to', output_database
+    print('dump selected linkers to', output_database)
 
 def select_linkers_for_sfgfp(data_path):
     pyrosetta.init(options='-extra_res_fa test_inputs/CRO.params')
@@ -41,8 +41,8 @@ def select_linkers_for_sfgfp(data_path):
     lhl_start = 141
     lhl_stop = 167
 
-    #for linker_length in [2, 3, 4, 5]:
-    for linker_length in [4]:
+    for linker_length in [2, 3, 4, 5]:
+    #for linker_length in [4]:
 
         # Select front linkers
 

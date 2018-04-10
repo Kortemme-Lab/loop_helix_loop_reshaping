@@ -44,5 +44,5 @@ if __name__ == '__main__':
     #screen(data_path, 'data/test_linker_selection', 'test_inputs/sfgfp_modified_from_5dph_cleaned.pdb',
     #        124, 138, num_jobs, job_id)
 
-    screen(data_path, 'data/test_loop_selection_1abe', 'test_inputs/1abe_cleaned.pdb',
+    screen(data_path, 'data/linker_selection_1abe', 'test_inputs/1abe_cleaned.pdb',
             141, 167, num_jobs, job_id)

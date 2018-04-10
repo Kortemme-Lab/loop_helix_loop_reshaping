@@ -227,7 +227,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
 
                 num_success += 1
 
-            if num_success > 100:exit() ###DEBUG
+            #if num_success > 100:exit() ###DEBUG
             
 def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0):
     '''Screen all loop helix loop units and record all possible designs.
