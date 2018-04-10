@@ -223,7 +223,8 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
             if len(helix_hb_scores) > 0 and max(helix_hb_scores) < -0.7:
                 output_pdb = 'model_{0}_{1}_{2}_{3}_{4}.pdb'.format(front_linker_length, back_linker_length, i, reshaped_region_start, reshaped_region_stop)
                 new_pose.dump_pdb(os.path.join(output_dir, output_pdb))
-                
+                #pose.dump_pdb(os.path.join(output_dir, output_pdb + '.before_connection.pdb'))###DEBUG
+
                 num_success += 1
 
             if num_success > 100:exit() ###DEBUG
