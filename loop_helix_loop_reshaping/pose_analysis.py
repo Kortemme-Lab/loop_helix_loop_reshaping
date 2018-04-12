@@ -40,3 +40,26 @@ def check_clashes_between_groups(pose, residues1, residues2, ignore_atom_beyond_
                         return False
 
     return True
+
+def contact_degrees_of_residues(pose, target_residues, residues_to_calc_against, cutoff_distance=10):
+    '''Calculate the contact degrees of target residues against
+    another group of residues. For one residue, the contact degree
+    is the number of residues in residues_to_calc_against to which
+    the CA-CA distance is within a given cutoff_distance.
+
+    Return:
+        A list of contact degrees for all target residues
+    '''
+    contact_degrees = []
+
+    for r1 in target_residues:
+        contact_degree = 0
+
+        for r2 in residues_to_calc_against:
+            if pose.residue(r1).xyz('CA').distance(pose.residue(r2).xyz('CA')) < cutoff_distance:
+                contact_degree += 1
+
+        contact_degrees.append(contact_degree)
+
+    return contact_degrees
+

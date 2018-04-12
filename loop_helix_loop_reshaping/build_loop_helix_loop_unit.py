@@ -132,12 +132,24 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
     for ss in dssp_str[helix_start - 1: helix_end]:
         if ss != 'H': return False
 
-    # Check clashes
+    # Check helix hbond scores
+
+    helix_hb_scores = filters.get_helix_hbond_scores(pose, helix_start, helix_end)
+    if len(helix_hb_scores) == 0 or max(helix_hb_scores) > -0.7:
+        return False 
+
+    # Check contact degrees of the helix
 
     helix_residues = list(range(helix_start, helix_end + 1))
     movable_residues = list(range(movable_region_start, movable_region_end + 1))
     not_movable_residues = list(range(1, movable_region_start)) + list(range(movable_region_end + 1, pose.size() + 1))
     
+    contact_degrees = pose_analysis.contact_degrees_of_residues(pose, helix_residues, not_movable_residues)
+    if np.median(contact_degrees) <= 1:
+        return False
+
+    # Check clashes
+
     simple_pose_moves.mutate_residues(pose, helix_residues + not_movable_residues, ['VAL'] * len(helix_residues + not_movable_residues))
 
     if not pose_analysis.check_clashes_between_groups(pose, movable_residues, not_movable_residues, ignore_atom_beyond_cb=False):
@@ -232,17 +244,12 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
                 
             new_pose, reshaped_region_start, reshaped_region_stop = test_result
             
-            # Filter by the helix hbond scores
+            output_pdb = 'model_{0}_{1}_{2}_{3}_{4}.pdb'.format(front_linker_length, back_linker_length, i, reshaped_region_start, reshaped_region_stop)
+            new_pose.dump_pdb(os.path.join(output_dir, output_pdb))
+            #pose.dump_pdb(os.path.join(output_dir, output_pdb + '.before_connection.pdb'))###DEBUG
+            #print(output_pdb) ###DEBUG
 
-            helix_hb_scores = filters.get_helix_hbond_scores(new_pose, reshaped_region_start + front_linker_length + 1, 
-                    reshaped_region_stop - back_linker_length - 1)
-
-            if len(helix_hb_scores) > 0 and max(helix_hb_scores) < -0.7:
-                output_pdb = 'model_{0}_{1}_{2}_{3}_{4}.pdb'.format(front_linker_length, back_linker_length, i, reshaped_region_start, reshaped_region_stop)
-                new_pose.dump_pdb(os.path.join(output_dir, output_pdb))
-                #pose.dump_pdb(os.path.join(output_dir, output_pdb + '.before_connection.pdb'))###DEBUG
-
-                num_success += 1
+            num_success += 1
 
             if num_success > 100:exit() ###DEBUG
             
