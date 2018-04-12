@@ -104,7 +104,7 @@ def close_helix_by_minimization(pose, movable_region_start, movable_region_end, 
     sfxn.set_weight(rosetta.core.scoring.base_pair_constraint, 0)
     min_mover.score_function(sfxn)
     min_mover.apply(pose)
-
+    
     return True
 
 def trim_helix_and_connect(original_pose, movable_region_start, movable_region_end, helix_start, helix_end, trim_start, trim_end):
@@ -134,8 +134,13 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
 
     # Check clashes
 
-    if not pose_analysis.check_clashes_between_groups(pose, list(range(movable_region_start, movable_region_end + 1)),
-            list(range(1, pose.size() + 1)), ignore_atom_beyond_cb=False):
+    helix_residues = list(range(helix_start, helix_end + 1))
+    movable_residues = list(range(movable_region_start, movable_region_end + 1))
+    not_movable_residues = list(range(1, movable_region_start)) + list(range(movable_region_end + 1, pose.size() + 1))
+    
+    simple_pose_moves.mutate_residues(pose, helix_residues + not_movable_residues, ['VAL'] * len(helix_residues + not_movable_residues))
+
+    if not pose_analysis.check_clashes_between_groups(pose, movable_residues, not_movable_residues, ignore_atom_beyond_cb=False):
         return False
 
     # Apply the torsions to the original_pose
