@@ -54,21 +54,12 @@ def residue_direction_vector(pose, res):
     '''Return the normalized vector pointing from N to C.'''
     return (pose.residue(res).xyz('C') - pose.residue(res).xyz('N')).normalized()
 
-def trim_helix_and_connect(original_pose, movable_region_start, movable_region_end, helix_start, helix_end, trim_start, trim_end):
-    '''Trim a part of a helix and connect the rest of the helix.
-    Return true if the connection could be made.
+def close_helix_by_minimization(pose, movable_region_start, movable_region_end, helix_start, helix_end):
+    '''Close a gap inside a helix by minimization.
+    Return true if the gap could be closed.
     '''
-    # Trim the helix
-    
-    simple_pose_moves.delete_region(original_pose, trim_start, trim_end) 
-    rosetta.core.pose.correctly_add_cutpoint_variants(original_pose)
-
-    movable_region_end -= trim_end - trim_start + 1
-    helix_end -= trim_end - trim_start + 1
-  
     # Make a clone of poly ALA pose for minimization
 
-    pose = original_pose.clone()
     simple_pose_moves.mutate_pose_to_single_AA(pose, 'ALA')
     rosetta.core.pose.correctly_add_cutpoint_variants(pose)
 
@@ -114,6 +105,27 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
     min_mover.score_function(sfxn)
     min_mover.apply(pose)
 
+    return True
+
+def trim_helix_and_connect(original_pose, movable_region_start, movable_region_end, helix_start, helix_end, trim_start, trim_end):
+    '''Trim a part of a helix and connect the rest of the helix.
+    Return true if a good connection could be made.
+    '''
+    # Trim the helix
+    
+    simple_pose_moves.delete_region(original_pose, trim_start, trim_end) 
+    rosetta.core.pose.correctly_add_cutpoint_variants(original_pose)
+
+    movable_region_end -= trim_end - trim_start + 1
+    helix_end -= trim_end - trim_start + 1
+  
+    # Close the gap
+
+    pose = original_pose.clone()
+    
+    if not close_helix_by_minimization(pose, movable_region_start, movable_region_end, helix_start, helix_end):
+        return False
+    
     # Check the secondary structure
 
     dssp_str = rosetta.core.scoring.dssp.Dssp(pose).get_dssp_secstruct()
@@ -124,7 +136,7 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
 
     if not pose_analysis.check_clashes_between_groups(pose, list(range(movable_region_start, movable_region_end + 1)),
             list(range(1, pose.size() + 1)), ignore_atom_beyond_cb=False):
-        return None
+        return False
 
     # Apply the torsions to the original_pose
 
