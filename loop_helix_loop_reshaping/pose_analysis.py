@@ -1,6 +1,8 @@
 import pyrosetta
 from pyrosetta import rosetta
 
+from loop_helix_loop_reshaping import simple_pose_moves
+
 
 def check_clashes_between_groups(pose, residues1, residues2, ignore_atom_beyond_cb=False):
     '''Return true if residues in two groups do not clash with each other.'''
@@ -62,4 +64,24 @@ def contact_degrees_of_residues(pose, target_residues, residues_to_calc_against,
         contact_degrees.append(contact_degree)
 
     return contact_degrees
+
+def num_buried_unsatisfied_hbonds(pose):
+    '''Return the number of buried unsatisfied hbonds for a pose.'''
+    buhf = rosetta.protocols.rosetta_scripts.XmlObjects.static_get_filter('<BuriedUnsatHbonds name="buriedunsat" cutoff="5" use_legacy_options="true" jump_number="0" />')
+    return buhf.report_sm(pose)
+
+def num_buried_unsatisfied_hbonds_change_upon_add_residues(pose, start, stop):
+    '''Return the number change of buried unsatisfied hhonds
+    upon adding a range of residues.
+    '''
+    pose_without_additions = pose.clone()
+    simple_pose_moves.delete_region(pose_without_additions, start, stop)
+
+    n_unsat_without_addition = num_buried_unsatisfied_hbonds(pose_without_additions)
+    n_unsat = num_buried_unsatisfied_hbonds(pose)
+
+    #print('num unsat: {0} - {1} = {2}'.format(n_unsat, n_unsat_without_addition, n_unsat - n_unsat_without_addition)) ###DEBUG
+
+    return n_unsat - n_unsat_without_addition
+
 

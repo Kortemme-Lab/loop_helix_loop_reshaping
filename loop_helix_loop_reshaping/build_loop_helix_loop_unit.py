@@ -155,6 +155,14 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
     if not pose_analysis.check_clashes_between_groups(pose, movable_residues, not_movable_residues, ignore_atom_beyond_cb=False):
         return False
 
+    # Check buried unsatisfied hbonds
+
+    buriedunsat_increase = pose_analysis.num_buried_unsatisfied_hbonds_change_upon_add_residues(
+            pose, movable_region_start, movable_region_end)
+
+    if buriedunsat_increase > 4:
+        return False
+
     # Apply the torsions to the original_pose
 
     for i in range(movable_region_start, movable_region_end + 1):
@@ -251,7 +259,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
 
             num_success += 1
 
-            if num_success > 100:exit() ###DEBUG
+            #if num_success > 100:exit() ###DEBUG
             
 def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0):
     '''Screen all loop helix loop units and record all possible designs.
