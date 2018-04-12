@@ -120,6 +120,12 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
     for ss in dssp_str[helix_start - 1: helix_end]:
         if ss != 'H': return False
 
+    # Check clashes
+
+    if not pose_analysis.check_clashes_between_groups(pose, list(range(movable_region_start, movable_region_end + 1)),
+            list(range(1, pose.size() + 1)), ignore_atom_beyond_cb=False):
+        return None
+
     # Apply the torsions to the original_pose
 
     for i in range(movable_region_start, movable_region_end + 1):
@@ -171,12 +177,6 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
     reshaped_region_start = front_linker_start - 1
     reshaped_region_stop = back_linker_start + back_linker_length - (max_res_pair_direction_dot[1] - max_res_pair_direction_dot[0]) 
    
-    # Check clashes
-
-    if not pose_analysis.check_clashes_between_groups(new_pose, list(range(reshaped_region_start, reshaped_region_stop + 1)),
-            list(range(1, new_pose.size() + 1)), ignore_atom_beyond_cb=True):
-        return None
-
     return new_pose, reshaped_region_start, reshaped_region_stop
 
 def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id):
@@ -227,7 +227,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
 
                 num_success += 1
 
-            #if num_success > 100:exit() ###DEBUG
+            if num_success > 100:exit() ###DEBUG
             
 def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0):
     '''Screen all loop helix loop units and record all possible designs.
