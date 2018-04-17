@@ -219,7 +219,7 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
 def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id):
     '''Screen loop helix loop units for fixed length linkers.
     Dump the models to the output_dir. Each modeled will be 
-    named model_frontLinkerLength_backLinkerLength_pairID_reshapedRegionStart_reshapedRegionStop.pdb
+    named model_frontLinkerLength_backLinkerLength_pairID_reshapedRegionStart_reshapedRegionStop.pdb.gz
     '''
     # Prepare the pose
 
@@ -252,7 +252,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
                 
             new_pose, reshaped_region_start, reshaped_region_stop = test_result
             
-            output_pdb = 'model_{0}_{1}_{2}_{3}_{4}.pdb'.format(front_linker_length, back_linker_length, i, reshaped_region_start, reshaped_region_stop)
+            output_pdb = 'model_{0}_{1}_{2}_{3}_{4}.pdb.gz'.format(front_linker_length, back_linker_length, i, reshaped_region_start, reshaped_region_stop)
             new_pose.dump_pdb(os.path.join(output_dir, output_pdb))
             #pose.dump_pdb(os.path.join(output_dir, output_pdb + '.before_connection.pdb'))###DEBUG
             #print(output_pdb) ###DEBUG
@@ -264,7 +264,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
 def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0):
     '''Screen all loop helix loop units and record all possible designs.
     Dump the models to the output_dir. Each modeled will be 
-    named model_frontLinkerLength_backLinkerLength_pairID_reshapedRegionStart_reshapedRegionStop.pdb
+    named model_frontLinkerLength_backLinkerLength_pairID_reshapedRegionStart_reshapedRegionStop.pdb.gz
     '''
 
     # Do some input checking

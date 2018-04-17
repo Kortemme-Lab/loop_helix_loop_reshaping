@@ -42,7 +42,8 @@ def print_pymol_selection_for_residues(pose, residues):
     print('sele ' + ' or '.join(res_commands))
 
 def generage_pose_file_for_1abe(input_pdb_path):
-    pdb_name = os.path.basename(input_pdb_path)[:-4]
+    pdb_name = os.path.basename(input_pdb_path)
+    pdb_name = pdb_name[:-4] if pdb_name.endswith('.pdb') else pdb_name[:-7]
     pdb_name_splited = pdb_name.split('_')
 
     reshaped_region_start = 141  
@@ -72,5 +73,5 @@ if __name__ == '__main__':
     path_to_pdbs ='/home/xingjie/Softwares/scripts/loop_helix_loop_reshaping/data/screen_lhl_units_1abe_mini'
 
     for f in os.listdir(path_to_pdbs):
-        if f.endswith('.pdb'):
+        if f.endswith('.pdb') of f.endswith('.pdb.gz'):
             generage_pose_file_for_1abe(os.path.join(path_to_pdbs, f))
