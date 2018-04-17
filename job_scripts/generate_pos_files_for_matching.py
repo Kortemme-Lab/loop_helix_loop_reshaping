@@ -68,10 +68,19 @@ def generage_pose_file_for_1abe(input_pdb_path):
         f.write(' '.join(pos_residues))
 
 if __name__ == '__main__':
+    path_to_pdbs = sys.argv[1]
+    
+    num_jobs = 1
+    job_id = 0
+    
+    if len(sys.argv) > 3:
+        num_jobs = int(sys.argv[2])
+        job_id = int(sys.argv[3]) - 1
+   
     pyrosetta.init()
     
-    path_to_pdbs ='/home/xingjie/Softwares/scripts/loop_helix_loop_reshaping/data/screen_lhl_units_1abe_mini'
-
-    for f in os.listdir(path_to_pdbs):
-        if f.endswith('.pdb') of f.endswith('.pdb.gz'):
+    target_files = [f for f in os.listdir(path_to_pdbs) if f.endswith('.pdb') or f.endswith('.pdb.gz')]
+            
+    for i, f in enumerate(target_files):
+        if i % num_jobs == job_id:
             generage_pose_file_for_1abe(os.path.join(path_to_pdbs, f))
