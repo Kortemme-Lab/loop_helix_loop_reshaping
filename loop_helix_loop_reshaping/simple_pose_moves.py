@@ -52,7 +52,7 @@ def insert_alas(pose, position, length, insert_after=True, reset_fold_tree=True)
         rosetta.core.conformation.idealize_position(position - 1, pose.conformation())
         rosetta.core.conformation.idealize_position(position, pose.conformation())
 
-def mutate_residues(pose, res_list, aa_list):
+def mutate_residues(pose, res_list, aa_list, protein_only=True):
     '''Mutate a list of residues. The list of AAs could
     either be 1 letter code or 3 letter code.
     '''
@@ -64,6 +64,9 @@ def mutate_residues(pose, res_list, aa_list):
 
     mutater = rosetta.protocols.simple_moves.MutateResidue()
     for i in range(len(res_list)):
+        if protein_only and (not pose.residue(res_list[i]).is_protein()):
+            continue
+
         name = aa_list[i] if len(aa_list[i]) == 3 else aa_name_map[aa_list[i]]
         mutater.set_res_name(name)
         mutater.set_target(res_list[i])

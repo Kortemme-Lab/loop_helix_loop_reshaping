@@ -58,6 +58,9 @@ def contact_degrees_of_residues(pose, target_residues, residues_to_calc_against,
         contact_degree = 0
 
         for r2 in residues_to_calc_against:
+            if not pose.residue(r2).is_protein():
+                continue
+            
             if pose.residue(r1).xyz('CA').distance(pose.residue(r2).xyz('CA')) < cutoff_distance:
                 contact_degree += 1
 
