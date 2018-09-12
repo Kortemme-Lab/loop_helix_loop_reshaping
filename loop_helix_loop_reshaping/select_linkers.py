@@ -10,22 +10,22 @@ def prepare_linker_selection(pose, linker_length, lhl_start, lhl_stop, front_lin
     GLY and PRO. Remove the residues in the loop-helix-loop region and add 
     residues for the linker. Setup the fold tree properly.
 
-    NOTE: the inserted residues will be linker_length + 1
+    NOTE: the inserted residues will be linker_length
 
     Args:
         front_linker: True if the linker is in the front of the loop-helix-loop
             unit
     '''
-    # Remove the LHL region
+    # Remove residues between start and stop
 
-    simple_pose_moves.delete_region(pose, lhl_start, lhl_stop)
-
+    simple_pose_moves.delete_region(pose, lhl_start + 1, lhl_stop - 1)
+    
     # Add the linker
 
     if front_linker:
-        simple_pose_moves.insert_alas(pose, lhl_start - 1, linker_length + 1, insert_after=True, reset_fold_tree=True)
+        simple_pose_moves.insert_alas(pose, lhl_start, linker_length, insert_after=True, reset_fold_tree=True)
     else:
-        simple_pose_moves.insert_alas(pose, lhl_start, linker_length + 1, insert_after=False, reset_fold_tree=True)
+        simple_pose_moves.insert_alas(pose, lhl_start + 1, linker_length, insert_after=False, reset_fold_tree=True)
 
     # Mutate the pose
 
@@ -36,16 +36,16 @@ def prepare_linker_selection(pose, linker_length, lhl_start, lhl_stop, front_lin
 def select_non_clashing_linkers(pose, candidate_linkers, linker_start):
     '''Select linkers that do not clash with the scaffold.
 
-    NOTE: The torsions from linker_start - 1 to linker_start + linker_length
+    NOTE: The torsions from linker_start to linker_start + linker_length + 1
     will be reset.
     '''
-    linker_residues = list(range(linker_start - 1, linker_start + len(candidate_linkers[0]['phis']) - 1))
+    linker_residues = list(range(linker_start, linker_start + len(candidate_linkers[0]['phis'])))
     pose_residues = list(range(1, pose.size() + 1))
 
     selected_linkers = []
 
     for i, linker in enumerate(candidate_linkers):
-        simple_pose_moves.apply_linker(pose, linker, linker_start - 1)
+        simple_pose_moves.apply_linker(pose, linker, linker_start)
 
         if pose_analysis.check_clashes_between_groups(pose, linker_residues, pose_residues):
             selected_linkers.append(linker)
