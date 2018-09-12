@@ -24,17 +24,17 @@ def prepare_pose_for_lhl_screen(pose, lhl_start, lhl_stop, front_linker_length, 
     '''
     # Remove the LHL region
 
-    simple_pose_moves.delete_region(pose, lhl_start, lhl_stop)
+    simple_pose_moves.delete_region(pose, lhl_start + 1, lhl_stop - 1)
 
     # Add the linker
 
-    simple_pose_moves.insert_alas(pose, lhl_start, back_linker_length + 10, insert_after=False, reset_fold_tree=True)
-    simple_pose_moves.insert_alas(pose, lhl_start - 1, front_linker_length + 10, insert_after=True, reset_fold_tree=True)
+    simple_pose_moves.insert_alas(pose, lhl_start + 1, back_linker_length + 10, insert_after=False, reset_fold_tree=True)
+    simple_pose_moves.insert_alas(pose, lhl_start, front_linker_length + 10, insert_after=True, reset_fold_tree=True)
     rosetta.core.pose.correctly_add_cutpoint_variants(pose)
 
     # Set the appended residues to be helices
 
-    apply_ideal_helix(pose, lhl_start + front_linker_length, 20)
+    apply_ideal_helix(pose, lhl_start + front_linker_length + 1, 20)
 
 def residue_bb_rmsd_with_cutoff(pose, res1, res2, ca_cutoff=3):
     '''Calculate the backbone RMSD between two residues.
@@ -182,13 +182,13 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
    
     # Apply the linkers
 
-    simple_pose_moves.apply_linker(pose, front_linker, front_linker_start - 1)
-    simple_pose_moves.apply_linker(pose, back_linker, back_linker_start - 1)
+    simple_pose_moves.apply_linker(pose, front_linker, front_linker_start)
+    simple_pose_moves.apply_linker(pose, back_linker, back_linker_start)
    
     # Test if the gap is bridged
 
-    front_helix = list(range(front_linker_start + front_linker_length, front_linker_start + front_linker_length + 10))
-    back_helix = list(range(back_linker_start - 10, back_linker_start))
+    front_helix = list(range(front_linker_start + 1 + front_linker_length, front_linker_start + 1 + front_linker_length + 10))
+    back_helix = list(range(back_linker_start - 9, back_linker_start + 1))
 
     # Find residue pair RMSDs. The last residue of the back helix is ignored
     # because it would be problematic if it is trimed.
@@ -207,12 +207,12 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
     # Trim the helix and bridge the gap
     
     new_pose = pose.clone()
-    if not trim_helix_and_connect(new_pose, front_linker_start, back_helix[-1] + back_linker_length, front_helix[0], 
+    if not trim_helix_and_connect(new_pose, front_linker_start, back_helix[-1] + back_linker_length + 1, front_helix[0], 
             back_helix[-1], max_res_pair_direction_dot[0] + 1, max_res_pair_direction_dot[1]):
         return None
    
-    reshaped_region_start = front_linker_start - 1
-    reshaped_region_stop = back_linker_start + back_linker_length - (max_res_pair_direction_dot[1] - max_res_pair_direction_dot[0]) 
+    reshaped_region_start = front_linker_start
+    reshaped_region_stop = back_linker_start + 1 + back_linker_length - (max_res_pair_direction_dot[1] - max_res_pair_direction_dot[0]) 
    
     return new_pose, reshaped_region_start, reshaped_region_stop
 
@@ -230,7 +230,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
     prepare_pose_for_lhl_screen(pose, lhl_start, lhl_stop, front_linker_length, back_linker_length) 
 
     front_linker_start = lhl_start
-    back_linker_start = lhl_start + front_linker_length + 20
+    back_linker_start = lhl_start + 1 + front_linker_length + 20
 
     # Define all tasks
 
