@@ -145,7 +145,7 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
     not_movable_residues = list(range(1, movable_region_start)) + list(range(movable_region_end + 1, pose.size() + 1))
     
     contact_degrees = pose_analysis.contact_degrees_of_residues(pose, helix_residues, not_movable_residues)
-    if np.median(contact_degrees) <= 1:
+    if np.median(contact_degrees) < 1:
         return False
 
     # Check clashes
@@ -214,12 +214,15 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
     reshaped_region_start = front_linker_start
     reshaped_region_stop = back_linker_start + 1 + back_linker_length - (max_res_pair_direction_dot[1] - max_res_pair_direction_dot[0]) 
    
-    return new_pose, reshaped_region_start, reshaped_region_stop
+    # The local id of the cutpoint residue. A cutpoint will be made after this residue
+    # The id of the start of LHL region (the residue before the front loop) is 1.
+    cutpoint_residue = max_res_pair_direction_dot[0] - front_linker_start + 1
 
-def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id):
+    return new_pose, reshaped_region_start, reshaped_region_stop, cutpoint_residue
+
+def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id, max_num_success=None):
     '''Screen loop helix loop units for fixed length linkers.
-    Dump the models to the output_dir. Each modeled will be 
-    named model_frontLinkerLength_backLinkerLength_pairID_reshapedRegionStart_reshapedRegionStop.pdb.gz
+    Return the torsions of the selected LHL units.
     '''
     # Prepare the pose
 
@@ -236,7 +239,14 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
 
     tasks = [(i, j) for i in range(len(front_db)) for j in range(len(back_db))]
 
+    # Randomly shuffle the tasks of not all the tasks are screens
+
+    if max_num_success:
+        np.random.shuffle(tasks)
+
     # Run the tasks
+
+    selected_lhl_units = []
 
     num_success = 0
 
@@ -250,31 +260,42 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
             
             if test_result is None: continue
                 
-            new_pose, reshaped_region_start, reshaped_region_stop = test_result
-            
-            output_pdb = 'model_{0}_{1}_{2}_{3}_{4}.pdb.gz'.format(front_linker_length, back_linker_length, i, reshaped_region_start, reshaped_region_stop)
-            new_pose.dump_pdb(os.path.join(output_dir, output_pdb))
-            #pose.dump_pdb(os.path.join(output_dir, output_pdb + '.before_connection.pdb'))###DEBUG
-            #print(output_pdb) ###DEBUG
+            new_pose, reshaped_region_start, reshaped_region_stop, cutpoint_residue = test_result
+           
+            lhl_unit = {
+                    'phis':[new_pose.phi(i) for i in range(reshaped_region_start, reshaped_region_stop + 1)],
+                    'psis':[new_pose.psi(i) for i in range(reshaped_region_start, reshaped_region_stop + 1)],
+                    'omegas':[new_pose.omega(i) for i in range(reshaped_region_start, reshaped_region_stop + 1)],
+                    'cutpoint':cutpoint_residue    
+                    } 
+            selected_lhl_units.append(lhl_unit)
 
             num_success += 1
 
             #if num_success > 100:exit() ###DEBUG
-            
-def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0):
-    '''Screen all loop helix loop units and record all possible designs.
-    Dump the models to the output_dir. Each modeled will be 
-    named model_frontLinkerLength_backLinkerLength_pairID_reshapedRegionStart_reshapedRegionStop.pdb.gz
-    '''
 
+            if max_num_success:
+                if num_success >= max_num_success:
+                    break
+
+    return selected_lhl_units
+            
+def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0, max_num_success_each_db_pair=None):
+    '''Screen all loop helix loop units and record all possible designs.
+    Return the torsions of the selected LHL units.
+    '''
     # Do some input checking
 
     assert(1 < lhl_start < lhl_stop < pose.size())
+
+    selected_lhl_units = []
 
     # Try all the combinations
 
     for front_db in front_linker_dbs:
         for back_db in back_linker_dbs:
         
-            screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id)
+            selected_lhl_units += screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id, 
+                    max_num_success=max_num_success_each_db_pair)
 
+    return selected_lhl_units
