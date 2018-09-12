@@ -93,3 +93,21 @@ def apply_linker(pose, linker, start):
         pose.set_psi(seqpos, linker['psis'][i]) 
         pose.set_omega(seqpos, linker['omegas'][i])
 
+def update_insertion_points(insertion_points, insertion_id, new_length):
+    '''Update the insertion point.'''
+    old_length = insertion_points[insertion_id]['stop'] - insertion_points[insertion_id]['start'] - 1
+    shift = new_length - old_length
+
+    for i in range(len(insertion_points)):
+        for k in ['start', 'stop']:
+            if insertion_points[i][k] > insertion_points[insertion_id]['start']:
+                insertion_points[i][k] += shift
+
+def remove_insertion_residues(pose, insertion_points):
+    '''Remove the residues within insertion points and
+    update the inerstion points.'''
+    for i in range(len(insertion_points)):
+        delete_region(pose, insertion_points[i]['start'] + 1, insertion_points[i]['stop'] - 1)
+        update_insertion_points(insertion_points, i, 0)
+
+
