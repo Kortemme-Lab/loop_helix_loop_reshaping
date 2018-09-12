@@ -71,6 +71,6 @@ if __name__ == '__main__':
         job_id = int(sys.argv[3]) - 1
   
     input_pdb = 'test_inputs/2lv8_cleaned.pdb'
-    input_insertion_points_file = 'test_inputs/2lv8_inerstion_points.json'
+    input_insertion_points_file = 'test_inputs/2lv8_insertion_points.json'
 
     select_linkers(data_path, input_pdb, input_insertion_points_file)
