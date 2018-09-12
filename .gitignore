@@ -4,3 +4,4 @@ venv
 data
 debug
 job_outputs
+job_scripts/user
