@@ -103,10 +103,14 @@ def update_insertion_points(insertion_points, insertion_id, new_length):
             if insertion_points[i][k] > insertion_points[insertion_id]['start']:
                 insertion_points[i][k] += shift
 
-def remove_insertion_residues(pose, insertion_points):
+def remove_insertion_residues(pose, insertion_points, insertion_ids=None):
     '''Remove the residues within insertion points and
     update the inerstion points.'''
-    for i in range(len(insertion_points)):
+    
+    if insertion_ids is None:
+        insertion_ids = range(len(insertion_points))
+    
+    for i in insertion_ids: 
         delete_region(pose, insertion_points[i]['start'] + 1, insertion_points[i]['stop'] - 1)
         update_insertion_points(insertion_points, i, 0)
 
