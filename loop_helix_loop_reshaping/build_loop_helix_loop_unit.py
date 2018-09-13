@@ -233,7 +233,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
     prepare_pose_for_lhl_screen(pose, lhl_start, lhl_stop, front_linker_length, back_linker_length) 
 
     front_linker_start = lhl_start
-    back_linker_start = lhl_start + 1 + front_linker_length + 20
+    back_linker_start = lhl_start + front_linker_length + 20
 
     # Define all tasks
 
