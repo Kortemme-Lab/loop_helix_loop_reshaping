@@ -53,38 +53,43 @@ def check_clashes_between_lhl_units(pose, insertion_points):
 
     return True
 
-def screen_compatible_loop_helix_loop_units(output_dir, pose, insertion_points, lhl_units, num_jobs, job_id):
+def screen_compatible_loop_helix_loop_units(output_dir, pose, insertion_points, lhl_units, num_jobs, job_id, max_num_to_screen=None):
     '''Get LHL units that are compatible with each other.
     Dump pdb files of the compatible structures and a json
     file for the insertion points.
     '''
-    
-    def get_all_combinations(num_units_at_each_position, current_id):
-        '''Get all combinations recursively.
-        Return a list of combinations.
-        '''
-        if current_id == len(num_units_at_each_position) - 1:
-            return [[i] for i in range(num_units_at_each_position[current_id])]
-        else:
-            low_level_combinations = get_all_combinations(num_units_at_each_position, current_id + 1)
-            combinations = []
-            
-            for i in range(num_units_at_each_position[current_id]):
-                for c in low_level_combinations:
-                    combinations.append([i] + c)
+    def index_to_combination(num_units_at_each_position, index):
+        '''Convert an index of a combination to the combination.'''
+        combination = []
 
-            return combinations
+        for n in num_units_at_each_position:
+            combination.append(index % n)
+            index = index // n 
+
+        return combination
 
     # Get the indices for all combinations of LHL units
 
     num_units_at_each_position = [len(x) for x in lhl_units]
-    combinations = get_all_combinations(num_units_at_each_position, 0)
+    
+    num_all_combinations = 1
+    for n in num_units_at_each_position:
+        num_all_combinations *= n
 
-    print('There are {0} combinations of lhl units.'.format(len(combinations)))
+    print('There are {0} combinations of lhl units.'.format(num_all_combinations))
+
+    if max_num_to_screen:
+        max_num_to_screen = min(max_num_to_screen, num_all_combinations)
+    else:
+        max_num_to_screen = num_all_combinations
 
     # Screen the LHL units
 
-    for i, c in enumerate(combinations):
+    for i in range(max_num_to_screen):
+        if i % num_jobs != job_id:
+            continue
+        
+        c = index_to_combination(num_units_at_each_position, i)
 
         # Apply the LHL unit
 
