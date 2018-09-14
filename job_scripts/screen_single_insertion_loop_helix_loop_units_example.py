@@ -9,7 +9,7 @@ from pyrosetta import rosetta
 
 import loop_helix_loop_reshaping as LHLR
 
-def screen(data_path, linker_database_path, input_pdb, input_insertion_points_file, num_jobs, job_id, max_num_success_each_db_pair=None):
+def screen(data_path, linker_database_path, input_pdb, input_insertion_points_file, num_jobs, job_id, max_num_success_each_db_pair=None, insertion_ids_to_screen=None):
   
     # Load insertion points
     
@@ -21,7 +21,10 @@ def screen(data_path, linker_database_path, input_pdb, input_insertion_points_fi
     pose = rosetta.core.import_pose.pose_from_file(input_pdb)
     LHLR.simple_pose_moves.remove_insertion_residues(pose, insertion_points)
 
-    for insertion_id in range(len(insertion_points)):
+    if insertion_ids_to_screen is None:
+        insertion_ids_to_screen = range(len(insertion_points))
+        
+    for insertion_id in insertion_ids_to_screen:
         
         # Load linker databases
         
@@ -63,4 +66,4 @@ if __name__ == '__main__':
     input_insertion_points_file = 'test_inputs/2lv8_insertion_points.json'
 
     screen(data_path, linker_database_path, input_pdb, input_insertion_points_file, 
-            num_jobs, job_id, max_num_success_each_db_pair=1)
+            num_jobs, job_id, max_num_success_each_db_pair=1, insertion_ids_to_screen=None)
