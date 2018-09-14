@@ -33,7 +33,7 @@ def select_and_dump_linkers(input_pdb, input_database, output_database, linker_l
     
     print('dump selected linkers to', output_database)
 
-def select_linkers(data_path, input_pdb, input_insertion_points_file):
+def select_linkers(data_path, input_pdb, input_insertion_points_file, insertion_ids_for_selection=None):
     pyrosetta.init()
     
     # Load insertion points
@@ -41,7 +41,10 @@ def select_linkers(data_path, input_pdb, input_insertion_points_file):
     with open(input_insertion_points_file, 'r') as f:
         insertion_points = json.load(f)
 
-    for insertion_id in range(len(insertion_points)):
+    if insertion_ids_for_selection is None:
+        insertion_ids_for_selection = range(len(insertion_points))
+
+    for insertion_id in insertion_ids_for_selection:
         start_ss = insertion_points[insertion_id]['start_ss']
         stop_ss = insertion_points[insertion_id]['stop_ss']
 
@@ -73,4 +76,4 @@ if __name__ == '__main__':
     input_pdb = 'test_inputs/2lv8_cleaned.pdb'
     input_insertion_points_file = 'test_inputs/2lv8_insertion_points.json'
 
-    select_linkers(data_path, input_pdb, input_insertion_points_file)
+    select_linkers(data_path, input_pdb, input_insertion_points_file, insertion_ids_for_selection=None)
