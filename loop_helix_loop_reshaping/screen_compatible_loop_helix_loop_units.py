@@ -53,30 +53,39 @@ def check_clashes_between_lhl_units(pose, insertion_points):
 
     return True
 
-def screen_compatible_loop_helix_loop_units(output_dir, pose, insertion_points, lhl_units, num_jobs, job_id, max_num_to_screen=None):
+def screen_compatible_loop_helix_loop_units(output_dir, pose, insertion_points, lhl_units, num_jobs, job_id, symmetric_lists=None, max_num_to_screen=None):
     '''Get LHL units that are compatible with each other.
     Dump pdb files of the compatible structures and a json
     file for the insertion points.
+    Args:
+        symmetric_lists : A list of list. Insertion_points_ids within an inner list will be symmetric.
     '''
-    def index_to_combination(num_units_at_each_position, index):
+    def index_to_combination(num_units_for_each_sym_list, index):
         '''Convert an index of a combination to the combination.'''
         combination = []
 
-        for n in num_units_at_each_position:
+        for n in num_units_for_each_sym_list:
             combination.append(index % n)
             index = index // n 
 
         return combination
 
-    # Get the indices for all combinations of LHL units
+    # Update the symmetric_lists
 
-    num_units_at_each_position = [len(x) for x in lhl_units]
-    
+    if symmetric_lists is None:
+        symmetric_lists = [[i] for i in range(len(insertion_points))]
+
+    # Get the number of LHL units for each symmetric list
+
+    num_units_for_each_sym_list = [len(lhl_units[i]) for i in range(len(symmetric_lists))]
+
     num_all_combinations = 1
-    for n in num_units_at_each_position:
+    for n in num_units_for_each_sym_list:
         num_all_combinations *= n
 
     print('There are {0} combinations of lhl units.'.format(num_all_combinations))
+
+    # Update the max number of combinations to screen
 
     if max_num_to_screen:
         max_num_to_screen = min(max_num_to_screen, num_all_combinations)
@@ -89,12 +98,15 @@ def screen_compatible_loop_helix_loop_units(output_dir, pose, insertion_points, 
         if i % num_jobs != job_id:
             continue
         
-        c = index_to_combination(num_units_at_each_position, i)
+        c = index_to_combination(num_units_for_each_sym_list, i)
 
         # Apply the LHL unit
 
-        for insertion_id in range(len(c)):
-            insert_loop_helix_loop_unit(pose, insertion_points, insertion_id, lhl_units[insertion_id][c[insertion_id]])
+        for sym_list_id in range(len(c)):
+            
+            for insertion_id in symmetric_lists[sym_list_id]:
+            
+                insert_loop_helix_loop_unit(pose, insertion_points, insertion_id, lhl_units[sym_list_id][c[sym_list_id]])
        
         # Check clashes
 
