@@ -16,20 +16,41 @@ def delete_region(pose, start, stop):
     pose.delete_residue_range_slow(start, stop)
     pose.conformation().detect_disulfides()
 
-def insert_alas(pose, position, length, insert_after=True, reset_fold_tree=True):
+def insert_alas(pose, position, length, insert_after=True, reset_fold_tree=True, fold_tree_root=1):
     '''Insert a poly-ALA peptide before or after a given position.,
     Set the fold tree to have a cutpoint before or after inserted residues.
     '''
-    assert(1 < position < pose.size())
-    
+    assert(1 <= position <= pose.size())
+
     # Set the fold tree with a single cutpoint
+
+    def sub_fold_tree_add_edges_no_jump(ft, root, start, stop):
+        '''Add edges to a sub-fold-tree that does not have
+        and jumps.'''
+        if start < root:
+            ft.add_edge(root, start, -1)
+        if stop > root:
+            ft.add_edge(root, stop, -1)
 
     if reset_fold_tree:
         cutpoint = position if insert_after else position - 1
         ft = rosetta.core.kinematics.FoldTree()
-        ft.add_edge(1, pose.size(), 1)
-        ft.add_edge(1, cutpoint, -1)
-        ft.add_edge(pose.size(), cutpoint + 1, -1)
+        
+        if fold_tree_root <= cutpoint and cutpoint < pose.size():
+            sub_root = pose.size()
+            ft.add_edge(fold_tree_root, sub_root, 1)
+            sub_fold_tree_add_edges_no_jump(ft, sub_root, cutpoint + 1, pose.size())
+            sub_fold_tree_add_edges_no_jump(ft, fold_tree_root, 1, cutpoint)
+        
+        elif fold_tree_root > cutpoint and cutpoint > 0:
+            sub_root = 1
+            ft.add_edge(fold_tree_root, sub_root, 1)
+            sub_fold_tree_add_edges_no_jump(ft, sub_root, 1, cutpoint)
+            sub_fold_tree_add_edges_no_jump(ft, fold_tree_root, cutpoint + 1, pose.size())
+
+        else:
+            sub_fold_tree_add_edges_no_jump(ft, fold_tree_root,  1, pose.size())
+        
         pose.fold_tree(ft)
 
     # Append the residues
@@ -47,9 +68,12 @@ def insert_alas(pose, position, length, insert_after=True, reset_fold_tree=True)
 
     if insert_after:
         rosetta.core.conformation.idealize_position(position + length, pose.conformation())
-        rosetta.core.conformation.idealize_position(position + length + 1, pose.conformation())
+        
+        if position + length + 1 <= pose.size():
+            rosetta.core.conformation.idealize_position(position + length + 1, pose.conformation())
     else:
-        rosetta.core.conformation.idealize_position(position - 1, pose.conformation())
+        if position - 1 > 0:
+            rosetta.core.conformation.idealize_position(position - 1, pose.conformation())
         rosetta.core.conformation.idealize_position(position, pose.conformation())
 
 def mutate_residues(pose, res_list, aa_list, protein_only=True):

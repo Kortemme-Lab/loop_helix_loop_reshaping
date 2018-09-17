@@ -9,11 +9,16 @@ from pyrosetta import rosetta
 from loop_helix_loop_reshaping import simple_pose_moves
 from loop_helix_loop_reshaping import pose_analysis
 
-
 def insert_loop_helix_loop_unit(pose, insertion_points, insertion_id, lhl_unit):
     '''Insert a loop helix loop unit to a given insertion point.
     The lhl_unit is dictionary with phis, psis, omegas and cutpoint.
     '''
+    # Run the terminal version of the function if the insertion point is on the terminal
+    
+    if insertion_points[insertion_id]['start'] == 0 or insertion_points[insertion_id]['stop'] == pose.size() + 1:
+        insert_terminal_loop_helix_loop_unit(pose, insertion_points, insertion_id, lhl_unit)
+        return
+
     # Remove the existing residues within the insertion point
 
     simple_pose_moves.remove_insertion_residues(pose, insertion_points, [insertion_id])
@@ -30,6 +35,60 @@ def insert_loop_helix_loop_unit(pose, insertion_points, insertion_id, lhl_unit):
 
     simple_pose_moves.apply_linker(pose, lhl_unit, insertion_points[insertion_id]['start'])
     simple_pose_moves.update_insertion_points(insertion_points, insertion_id, len(lhl_unit['phis']) - 2 )
+
+def insert_terminal_loop_helix_loop_unit(pose, insertion_points, insertion_id, lhl_unit):
+    '''Insert a loop helix loop unit to a terminal of a protein and
+    trim the overhanging loop.
+    '''
+    # Remove the existing residues within the insertion point
+
+    simple_pose_moves.remove_insertion_residues(pose, insertion_points, [insertion_id])
+
+    # Insert residues and apply the torsions 
+
+    lhl_length = len(lhl_unit['phis']) - 2
+
+    if insertion_points[insertion_id]['start'] == 0: # N-term
+        simple_pose_moves.insert_alas(pose, 1, lhl_length + 1, insert_after=False, reset_fold_tree=True, fold_tree_root=pose.size())
+        simple_pose_moves.apply_linker(pose, lhl_unit, 1)
+        
+        # Remove the one extra residue which was added for torsion application
+        simple_pose_moves.delete_region(pose, 1, 1)
+
+        # Remove the overhanging loop
+        dssp_str = rosetta.core.scoring.dssp.Dssp(pose).get_dssp_secstruct()
+
+        overhanging_loop_length = 0
+        for i in range(lhl_length):
+            if dssp_str[i] != 'H':
+                overhanging_loop_length += 1
+            else:
+                break
+       
+        if overhanging_loop_length > 0:
+            simple_pose_moves.delete_region(pose, 1, overhanging_loop_length)
+        simple_pose_moves.update_insertion_points(insertion_points, insertion_id, lhl_length - overhanging_loop_length)
+
+    elif insertion_points[insertion_id]['stop'] == pose.size() + 1: # C-term
+        simple_pose_moves.insert_alas(pose, pose.size(), lhl_length + 1, insert_after=True, reset_fold_tree=True, fold_tree_root=1) 
+        simple_pose_moves.apply_linker(pose, lhl_unit, insertion_points[insertion_id]['start'])
+
+        # Remove the one extra residue which was added for torsion application
+        simple_pose_moves.delete_region(pose, pose.size(), pose.size())
+
+        # Remove the overhanging loop
+        dssp_str = rosetta.core.scoring.dssp.Dssp(pose).get_dssp_secstruct()
+
+        overhanging_loop_length = 0
+        for i in range(lhl_length):
+            if dssp_str[-1 - i] != 'H':
+                overhanging_loop_length += 1
+            else:
+                break
+
+        if overhanging_loop_length > 0:
+            simple_pose_moves.delete_region(pose, pose.size() - overhanging_loop_length + 1, pose.size())
+        simple_pose_moves.update_insertion_points(insertion_points, insertion_id, lhl_length - overhanging_loop_length)
 
 def check_clashes_between_lhl_units(pose, insertion_points):
     '''Check the clashes between LHL units.
