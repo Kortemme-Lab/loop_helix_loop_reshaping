@@ -1,5 +1,5 @@
-# loop_helix_loop_reshaping
-Reshape a part of the protein into a loop-helix-loop unit
+# Loop Helix Loop Reshaping
+Loop-helix-loop (LHL) units are a type of structual motif that is highly varible in natural proteins and determines protein functions when a LHL unit is a part of a functional site. This repository provides PyRosetta based methods to simultaneously sample geometries and lengths of LHL units.
 
 ## Installation
 I recommand to create a python virtual environment before installing the package.
@@ -10,6 +10,18 @@ Activate the virtual environment and install the package by
 ```
 pip install -e .
 ```
+
+## Glossary
+
+Loop-helix-loop (LHL) unit: a segment of a protein that has the loop-helix-loop secondary structure. The two ends of a LHL unit should be anchored on regulary secondary structures (alpha helices or beta strands).
+
+Scaffold: the structure that LHL units are built on. The scaffold is fixed during the LHL modeling process.
+
+Insertion point: a position where LHL units are inserted. An insertion point is represented as a dictionary. For example
+```
+{"start":58, "stop":76, "start_ss":"sheet", "stop_ss":"sheet"}
+```
+defines an insertion point that starts at sequence position 58 and stops at sequence position 76. The secondary structures that are before and after the LHL units are both beta strands. Note that the start and stop positions are not on the LHL unit, i.e. the start position is the last residue on the preceeding beta strand and the stop position is the first residue on the post beta strand.
 
 ## Running An Example
 This is an example that remodels two loop-helix-loop units in the `test_inputs/2lv8_cleaned.pdb` structure. The insertion points for the LHL units are defined in the file `test_inputs/2lv8_insertion_points.json`. 
