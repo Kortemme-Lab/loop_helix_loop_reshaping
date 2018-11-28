@@ -151,9 +151,14 @@ def screen_compatible_loop_helix_loop_units(output_dir, pose, insertion_points, 
     else:
         max_num_to_screen = num_all_combinations
 
+    # Get the list of indices
+
+    np.random.seed(42)
+    indices = np.random.choice(num_all_combinations, size=max_num_to_screen, replace=False) 
+
     # Screen the LHL units
 
-    for i in range(max_num_to_screen):
+    for i in indices:
         if i % num_jobs != job_id:
             continue
         
