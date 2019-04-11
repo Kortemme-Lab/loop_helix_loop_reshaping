@@ -165,7 +165,7 @@ def plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames):
         U.append(d_pj[0])
         V.append(d_pj[1])
 
-    plt.quiver(X, Y, U, V) 
+    plt.quiver(X, Y, U, V, width=0.001) 
     #plt.show()
 
 def plot_the_underlying_sheet(sheet_ca_positions, sheet_res_frames):
@@ -272,6 +272,20 @@ def get_all_helix_coords_for_data_set(data_path, sheet_ca_positions, sheet_res_f
 
     return helix_coords
 
+def dump_helix_coords(helix_coords, file_name):
+    '''Dump helix coordinates to a json file'''
+    h_coords_serial = [[list(c), list(d)] for c, d in helix_coords]
+    
+    with open(file_name, 'w') as f:
+        json.dump(h_coords_serial, f)
+
+def load_helix_coords(file_name):
+    '''Load helix coordinates from a json file'''
+    with open(file_name, 'r') as f:
+        h_coords_serial = json.load(f)
+
+    return [[np.array(c), np.array(d)] for c, d in h_coords_serial]
+
 if __name__ == '__main__':
 
     pyrosetta.init()
@@ -311,7 +325,11 @@ if __name__ == '__main__':
     #        for helix in helices]
    
     helix_coords = get_all_helix_coords_for_data_set('/home/xingjie/Softwares/scripts/loop_helix_loop_reshaping/data/test_screen_compatible_loop_helix_loop_units', sheet_ca_positions, sheet_res_frames)
+    
+    #dump_helix_coords(helix_coords, 'test.json')
+    #helix_coords = load_helix_coords('test.json')
 
     plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames)
+
 
     plt.show()
