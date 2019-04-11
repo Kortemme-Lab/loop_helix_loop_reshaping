@@ -2,6 +2,9 @@
 '''Plot the distribution of helices in the beta sheet coordinates.
 '''
 
+import os
+import json
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -136,7 +139,7 @@ def project_a_helix_to_sheet_coords(pose, helix, sheet_ca_positions, sheet_res_f
     '''
     helix_cas = [xyz_to_np_array(pose.residue(i).xyz('CA')) for i in range(helix[0], helix[1] + 1)]
     helix_dirs = [xyz_to_np_array(pose.residue(i).xyz('O') - pose.residue(i).xyz('C'))
-            for i in range(helix[0], helix[1] + 1)]
+            for i in range(helix[0], min(helix[1] + 1, pose.size()))]
 
     center = sum(helix_cas) / len(helix_cas)
     center_dir = sum(helix_dirs)
@@ -216,6 +219,58 @@ def plot_test(sheet_ca_positions, sheet_res_frames, points):
 
     plt.plot(X, Y)
 
+def get_all_helix_coords_for_one_design(pdb_file, insertion_file, sheet_ca_positions, sheet_res_frames):
+    '''Get all coordinates for remodeled helices for one design.'''
+    pose = rosetta.core.import_pose.pose_from_file(pdb_file)
+    dssp_str = rosetta.core.scoring.dssp.Dssp(pose).get_dssp_secstruct()
+
+    # Find all helices
+    with open(insertion_file, 'r') as f:
+        insertion_info = json.load(f) 
+
+    helix_coords = []
+
+    for d in insertion_info:
+        h_start = d['stop']
+        h_stop = d['start']
+        
+        for i in range(d['start'], d['stop'] + 1):
+            if dssp_str[i - 1] == 'H':
+                if i < h_start:
+                    h_start = i
+                if i > h_stop:
+                    h_stop = i
+
+        if h_start > h_stop: continue
+
+        helix_coords.append(project_a_helix_to_sheet_coords(pose, (h_start, h_stop), sheet_ca_positions, sheet_res_frames))
+
+    return helix_coords
+
+def get_all_helix_coords_for_data_set(data_path, sheet_ca_positions, sheet_res_frames):
+    '''Get all coordinates for remodeled helices in a data set.'''
+    # Get all pdb files and insertion files
+    
+    pdb_files = []
+    insertion_files = []
+
+    for f in os.listdir(data_path):
+        if f.endswith('.pdb.gz'):
+            pdb_id = f.split('.')[0].split('_')[-1]
+            insertion_file = os.path.join(data_path, 'insertion_points_{0}.json'.format(pdb_id))
+
+            if os.path.exists(insertion_file):
+                insertion_files.append(insertion_file)
+                pdb_files.append(os.path.join(data_path, f))
+
+    # Get the helix coords
+    
+    helix_coords = []
+
+    for i in range(len(pdb_files)):
+        helix_coords += get_all_helix_coords_for_one_design(pdb_files[i], insertion_files[i], sheet_ca_positions, sheet_res_frames) 
+
+    return helix_coords
 
 if __name__ == '__main__':
 
@@ -251,11 +306,12 @@ if __name__ == '__main__':
     plot_the_underlying_sheet(sheet_ca_positions, sheet_res_frames)
     #plot_test(sheet_ca_positions, sheet_res_frames, ca_points)
 
-    helices = [(36, 52), (71, 81)]
+    #helices = [(36, 52), (71, 81)]
+    #helix_coords = [project_a_helix_to_sheet_coords(pose, helix, sheet_ca_positions, sheet_res_frames)
+    #        for helix in helices]
+   
+    helix_coords = get_all_helix_coords_for_data_set('/home/xingjie/Softwares/scripts/loop_helix_loop_reshaping/data/test_screen_compatible_loop_helix_loop_units', sheet_ca_positions, sheet_res_frames)
 
-    helix_coords = [project_a_helix_to_sheet_coords(pose, helix, sheet_ca_positions, sheet_res_frames)
-            for helix in helices]
-    
     plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames)
 
     plt.show()
