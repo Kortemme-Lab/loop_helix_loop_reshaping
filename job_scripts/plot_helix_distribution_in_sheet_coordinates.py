@@ -81,10 +81,11 @@ def get_sheet_residue_local_frames(pose, sheet_residues, strand_directions, z_re
     
     return sheet_res_frames
 
-def project_point_to_sheet(sheet_ca_positions, sheet_res_frames, point):
+def project_point_to_sheet(sheet_ca_positions, sheet_res_frames, point, vector=None):
     '''Project a point onto the sheet coordinates.
     Use a gaussian function to weight the contributations
     of different local frames.
+    Also project a vector attached to that point if given.
     '''
     ref_vertical_length = 3.3
     ref_horizontal_length = 4.6
@@ -118,7 +119,50 @@ def project_point_to_sheet(sheet_ca_positions, sheet_res_frames, point):
     x = mean_sheet_coord[0] + np.dot(diff, mean_frame[0])
     y = mean_sheet_coord[1] + np.dot(diff, mean_frame[1])
 
+    # Project the attached vector
+    
+    if not (vector is None):
+        v_x = np.dot(vector, mean_frame[0])
+        v_y = np.dot(vector, mean_frame[1])
+        return np.array([x, y]), np.array([v_x, v_y])
+
     return np.array([x, y])
+
+def project_a_helix_to_sheet_coords(pose, helix, sheet_ca_positions, sheet_res_frames):
+    '''Project A helix to sheet coordinates.
+    The helix is defined as a pair (start, stop).
+    Return the center of helix and the direction of the helix
+    in the sheet coordinates.
+    '''
+    helix_cas = [xyz_to_np_array(pose.residue(i).xyz('CA')) for i in range(helix[0], helix[1] + 1)]
+    helix_dirs = [xyz_to_np_array(pose.residue(i).xyz('O') - pose.residue(i).xyz('C'))
+            for i in range(helix[0], helix[1] + 1)]
+
+    center = sum(helix_cas) / len(helix_cas)
+    center_dir = sum(helix_dirs)
+
+    c_pj, d_pj = project_point_to_sheet(sheet_ca_positions, sheet_res_frames, center, center_dir)
+
+    return c_pj, d_pj / np.linalg.norm(d_pj)
+
+def plot_helices(pose, helices, sheet_ca_positions, sheet_res_frames):
+    '''Plot helices on under the sheet coordinates.
+    A helix is defined as a pair (start, stop).
+    '''
+    X = []
+    Y = []
+    U = []
+    V = []
+
+    for helix in helices:
+        c_pj, d_pj = project_a_helix_to_sheet_coords(pose, helix, sheet_ca_positions, sheet_res_frames)
+        X.append(c_pj[0])
+        Y.append(c_pj[1])
+        U.append(d_pj[0])
+        V.append(d_pj[1])
+
+    plt.quiver(X, Y, U, V) 
+    #plt.show()
 
 def plot_the_underlying_sheet(sheet_ca_positions, sheet_res_frames):
     '''Plot the underlying sheet.'''
@@ -170,7 +214,6 @@ def plot_test(sheet_ca_positions, sheet_res_frames, points):
         Y.append(sheet_coord[1])
 
     plt.plot(X, Y)
-    plt.show()
 
 
 if __name__ == '__main__':
@@ -205,4 +248,10 @@ if __name__ == '__main__':
     #ca_points = [np.array([i, i, i]) for i in range(10)]
 
     plot_the_underlying_sheet(sheet_ca_positions, sheet_res_frames)
-    plot_test(sheet_ca_positions, sheet_res_frames, ca_points)
+    #plot_test(sheet_ca_positions, sheet_res_frames, ca_points)
+
+    helices = [(36, 52), (71, 81)]
+
+    plot_helices(pose, helices, sheet_ca_positions, sheet_res_frames)
+
+    plt.show()
