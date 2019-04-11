@@ -290,41 +290,40 @@ if __name__ == '__main__':
 
     pyrosetta.init()
 
-    pose = rosetta.core.import_pose.pose_from_file('/home/xingjie/Softwares/scripts/loop_helix_loop_reshaping/data/test_screen_compatible_loop_helix_loop_units/model_104.pdb.gz')
+    ref_pdb = '/home/xingjie/Softwares/scripts/loop_helix_loop_reshaping/test_inputs/2lv8_cleaned.pdb'
+    data_path = '/home/xingjie/Softwares/scripts/loop_helix_loop_reshaping/data/test_screen_compatible_loop_helix_loop_units'
+
+    pose = rosetta.core.import_pose.pose_from_file(ref_pdb)
 
     # Define residues in a beta sheet. The residues should be aligned.
     # Residues that cannot be aligned should be set to None.
 
     sheet_residues = [
-            [None,None,None,27,28,29,30,None],
-            [None,1,2,3,4,5,6,7],
-            [57,58,59,60,61,62,63,64],
-            [None,None,None,86,87,88,89,90],
+            [None,None,27,28,29,30,31],
+            [1,2,3,4,5,6,7],
+            [51,52,53,54,55,56,57],
+            [None,None,77,78,79,80,81],
             ]
     strand_directions = [True, True, True, True]
     
     # The residue on a strand that determines the Z-direction
     # This value must be set correctly such that as the indices
     # increase, the projected x, y coordinates also increase.
-    z_ref_residue = 3 
+    z_ref_residue = 0 
 
     sheet_ca_positions = get_sheet_ca_positions(pose, sheet_residues)
-
     sheet_res_frames = get_sheet_residue_local_frames(pose, sheet_residues, strand_directions, z_ref_residue)
 
-    ca_points = [xyz_to_np_array(pose.residue(i).xyz('CA')) for i in range(1, pose.size() + 1)]
-    #ca_points = [xyz_to_np_array(pose.residue(i).xyz('CA')) for i in range(69, 82)]
-    #ca_points = [xyz_to_np_array(pose.residue(i).xyz('CA')) for i in [69, 73, 77, 81]]
-    #ca_points = [np.array([i, i, i]) for i in range(10)]
-
     plot_the_underlying_sheet(sheet_ca_positions, sheet_res_frames)
+    
+    #ca_points = [xyz_to_np_array(pose.residue(i).xyz('CA')) for i in range(1, pose.size() + 1)]
     #plot_test(sheet_ca_positions, sheet_res_frames, ca_points)
 
     #helices = [(36, 52), (71, 81)]
     #helix_coords = [project_a_helix_to_sheet_coords(pose, helix, sheet_ca_positions, sheet_res_frames)
     #        for helix in helices]
    
-    helix_coords = get_all_helix_coords_for_data_set('/home/xingjie/Softwares/scripts/loop_helix_loop_reshaping/data/test_screen_compatible_loop_helix_loop_units', sheet_ca_positions, sheet_res_frames)
+    helix_coords = get_all_helix_coords_for_data_set(data_path, sheet_ca_positions, sheet_res_frames)
     
     #dump_helix_coords(helix_coords, 'test.json')
     #helix_coords = load_helix_coords('test.json')
