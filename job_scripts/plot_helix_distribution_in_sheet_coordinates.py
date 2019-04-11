@@ -145,19 +145,20 @@ def project_a_helix_to_sheet_coords(pose, helix, sheet_ca_positions, sheet_res_f
 
     return c_pj, d_pj / np.linalg.norm(d_pj)
 
-def plot_helices(pose, helices, sheet_ca_positions, sheet_res_frames):
+def plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames):
     '''Plot helices on under the sheet coordinates.
-    A helix is defined as a pair (start, stop).
+    A helix coordinate is defined by 2 2D vectors
+    (helix_center_position, helix_direction)
     '''
     X = []
     Y = []
     U = []
     V = []
 
-    for helix in helices:
-        c_pj, d_pj = project_a_helix_to_sheet_coords(pose, helix, sheet_ca_positions, sheet_res_frames)
-        X.append(c_pj[0])
-        Y.append(c_pj[1])
+    for hc in helix_coords:
+        c_pj, d_pj = hc
+        X.append(c_pj[0] - d_pj[0] / 2)
+        Y.append(c_pj[1] - d_pj[1] / 2)
         U.append(d_pj[0])
         V.append(d_pj[1])
 
@@ -252,6 +253,9 @@ if __name__ == '__main__':
 
     helices = [(36, 52), (71, 81)]
 
-    plot_helices(pose, helices, sheet_ca_positions, sheet_res_frames)
+    helix_coords = [project_a_helix_to_sheet_coords(pose, helix, sheet_ca_positions, sheet_res_frames)
+            for helix in helices]
+    
+    plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames)
 
     plt.show()
