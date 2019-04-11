@@ -4,6 +4,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 import pyrosetta
 from pyrosetta import rosetta
@@ -121,22 +122,43 @@ def project_point_to_sheet(sheet_ca_positions, sheet_res_frames, point):
 
 def plot_the_underlying_sheet(sheet_ca_positions, sheet_res_frames):
     '''Plot the underlying sheet.'''
-    X = []
-    Y = []
+    sheet_coords = []
+
+    # Get the projected coordinates of sheet residues
+
+    polygon_color = np.array([1, 1, 1]) * 0.9
 
     for i in range(len(sheet_ca_positions)):
+        strand_coords = []
         for j in range(len(sheet_ca_positions[i])):
             
             if sheet_ca_positions[i][j] is None:
                 continue
-
-            sheet_coord = project_point_to_sheet(sheet_ca_positions, sheet_res_frames, sheet_ca_positions[i][j])
             
-            X.append(sheet_coord[0])
-            Y.append(sheet_coord[1])
+            color = polygon_color if j % 2 else 'white'
 
-    plt.scatter(X, Y)
-    plt.show()
+            strand_coords.append((project_point_to_sheet(sheet_ca_positions, sheet_res_frames, sheet_ca_positions[i][j]),
+                color))
+           
+            sheet_coords.append(strand_coords)
+
+    # Plot the poligons of peptide bonds
+    
+    fig, ax = plt.subplots()
+
+    for i in range(len(sheet_coords)):
+        for j in range(len(sheet_coords[i]) - 1):
+            l = np.array([-1, 0])
+            r = np.array([1, 0])
+            
+            p1 = sheet_coords[i][j][0]
+            p2 = sheet_coords[i][j + 1][0]
+            
+            polygon= plt.Polygon([p1 + l, p1 + r, p2 + r, p2 + l], 
+                    edgecolor=polygon_color, facecolor=sheet_coords[i][j][1], zorder=-100)
+            ax.add_patch(polygon)
+   
+    #plt.show()
 
 def plot_test(sheet_ca_positions, sheet_res_frames, points):
     X = []
@@ -147,8 +169,8 @@ def plot_test(sheet_ca_positions, sheet_res_frames, points):
         X.append(sheet_coord[0])
         Y.append(sheet_coord[1])
 
-    plt.scatter(X, Y)
-    #plt.show()
+    plt.plot(X, Y)
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -175,16 +197,12 @@ if __name__ == '__main__':
 
     sheet_ca_positions = get_sheet_ca_positions(pose, sheet_residues)
 
-    print(sheet_ca_positions)
-
     sheet_res_frames = get_sheet_residue_local_frames(pose, sheet_residues, strand_directions, z_ref_residue)
-
-    print(sheet_res_frames)
 
     ca_points = [xyz_to_np_array(pose.residue(i).xyz('CA')) for i in range(1, pose.size() + 1)]
     #ca_points = [xyz_to_np_array(pose.residue(i).xyz('CA')) for i in range(69, 82)]
     #ca_points = [xyz_to_np_array(pose.residue(i).xyz('CA')) for i in [69, 73, 77, 81]]
     #ca_points = [np.array([i, i, i]) for i in range(10)]
 
-    plot_test(sheet_ca_positions, sheet_res_frames, ca_points)
     plot_the_underlying_sheet(sheet_ca_positions, sheet_res_frames)
+    plot_test(sheet_ca_positions, sheet_res_frames, ca_points)
