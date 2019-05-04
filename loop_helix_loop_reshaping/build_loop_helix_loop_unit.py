@@ -223,7 +223,7 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
     return new_pose, reshaped_region_start, reshaped_region_stop, cutpoint_residue
 
 def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id, max_num_success=None,
-        num_res_clashes_tolerance=0):
+        num_res_clashes_tolerance=0, dump_trajectory=False):
     '''Screen loop helix loop units for fixed length linkers.
     Return the torsions of the selected LHL units.
     '''
@@ -247,6 +247,14 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
     if max_num_success:
         np.random.shuffle(tasks)
 
+    # Prepare for trajectory dumping
+
+    if dump_trajectory:
+        trajectory_path = os.path.join(output_dir, 'trajectories')
+        os.makedirs(trajectory_path, exist_ok=True)
+        n_fail_dumped = 0
+        max_fail_dumped = 20
+
     # Run the tasks
 
     selected_lhl_units = []
@@ -260,6 +268,23 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
             
             test_result = test_linker_pairs(pose, front_db[task[0]], back_db[task[1]], 
                     front_linker_start, back_linker_start, num_res_clashes_tolerance=num_res_clashes_tolerance)
+            
+            # Dump trajectory
+
+            if dump_trajectory:
+                if (test_result is None):
+                    if n_fail_dumped >= max_fail_dumped:
+                        continue
+                    n_fail_dumped += 1
+
+                pose.dump_pdb(os.path.join(trajectory_path, 'trajectory_{0}_{1}_{2}_{3}_{4}.pdb.gz'.format(
+                    lhl_start, front_linker_length, back_linker_length, task[0], task[1])))
+
+                if not (test_result is None):
+                    test_result[0].dump_pdb(os.path.join(trajectory_path, 'trajectory_{0}_{1}_{2}_{3}_{4}_closed.pdb.gz'.format(
+                        lhl_start, front_linker_length, back_linker_length, task[0], task[1])))
+
+            # Save the success
             
             if test_result is None: continue
                 
@@ -284,7 +309,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
     return selected_lhl_units
             
 def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0, max_num_success_each_db_pair=None,
-        num_res_clashes_tolerance=0):
+        num_res_clashes_tolerance=0, dump_trajectory=False):
     '''Screen all loop helix loop units and record all possible designs.
     Return the torsions of the selected LHL units.
     '''
@@ -300,6 +325,6 @@ def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, fron
         for back_db in back_linker_dbs:
         
             selected_lhl_units += screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id, 
-                    max_num_success=max_num_success_each_db_pair, num_res_clashes_tolerance=num_res_clashes_tolerance)
+                    max_num_success=max_num_success_each_db_pair, num_res_clashes_tolerance=num_res_clashes_tolerance, dump_trajectory=dump_trajectory)
 
     return selected_lhl_units
