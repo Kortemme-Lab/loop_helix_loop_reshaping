@@ -192,7 +192,7 @@ def plot_the_underlying_sheet(sheet_ca_positions, sheet_res_frames):
 
     # Plot the poligons of peptide bonds
     
-    fig, ax = plt.subplots()
+    ax = plt.axes()
 
     for i in range(len(sheet_coords)):
         for j in range(len(sheet_coords[i]) - 1):
@@ -330,5 +330,5 @@ if __name__ == '__main__':
 
     plot_helices(pose, helix_coords, sheet_ca_positions, sheet_res_frames)
 
-
+    plt.axes().set_aspect('equal')
     plt.show()
