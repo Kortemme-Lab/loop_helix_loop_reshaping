@@ -54,6 +54,22 @@ def residue_direction_vector(pose, res):
     '''Return the normalized vector pointing from N to C.'''
     return (pose.residue(res).xyz('C') - pose.residue(res).xyz('N')).normalized()
 
+def find_bb_hbonds_involving_residues(pose, residues):
+    '''Find backbone hbonds involving a given set of residues.
+    An Hbond is defined as (donor_res, acceptor_res)
+    '''
+    hbset = rosetta.core.scoring.hbonds.HBondSet(pose, bb_only=True)
+    hbonds = []
+
+    for i in range(1, hbset.nhbonds() + 1):
+        acc = hbset.hbond(i).acc_res()
+        don = hbset.hbond(i).don_res()
+
+        if acc in residues or don in residues:
+            hbonds.append((don, acc))
+
+    return hbonds
+
 def close_helix_by_minimization(pose, movable_region_start, movable_region_end, helix_start, helix_end):
     '''Close a gap inside a helix by minimization.
     Return true if the gap could be closed.
@@ -63,11 +79,14 @@ def close_helix_by_minimization(pose, movable_region_start, movable_region_end, 
     simple_pose_moves.mutate_pose_to_single_AA(pose, 'ALA')
     rosetta.core.pose.correctly_add_cutpoint_variants(pose)
 
-    # Set hydrogen bond constraints for the helix
+    # Set hydrogen bond constraints for the linkers and helix
+
+    linker_residues = list(range(movable_region_start, helix_start + 1)) + list(range(helix_end, movable_region_end + 1))
+    linker_hbonds = find_bb_hbonds_involving_residues(pose, linker_residues)
 
     pose.constraint_set().clear()
     helix_hbs = [(i + 4, i) for i in range(helix_start, helix_end - 3)]
-    constraint.add_constraints_to_pose(pose, constraint.get_bb_hbond_constraint(helix_hbs))
+    constraint.add_constraints_to_pose(pose, constraint.get_bb_hbond_constraint(linker_hbonds + helix_hbs))
 
     # Set score function
 
@@ -300,6 +319,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
 
             num_success += 1
 
+            #new_pose.dump_pdb(os.path.join(output_dir, 'debug_model_{0}.pdb.gz'.format(num_success))) ###DEBUG
             #if num_success > 100:exit() ###DEBUG
 
             if max_num_success:
