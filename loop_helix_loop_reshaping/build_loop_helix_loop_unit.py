@@ -169,11 +169,13 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
 
     # Check clashes
 
+    simple_pose_moves.mutate_residues(pose, helix_residues + not_movable_residues, ['ALA'] * len(helix_residues + not_movable_residues))
+    num_res_clashes_ala = pose_analysis.count_res_clashes_between_groups(pose, movable_residues, not_movable_residues, ignore_atom_beyond_cb=False)
+
     simple_pose_moves.mutate_residues(pose, helix_residues + not_movable_residues, ['VAL'] * len(helix_residues + not_movable_residues))
+    num_res_clashes_val = pose_analysis.count_res_clashes_between_groups(pose, movable_residues, not_movable_residues, ignore_atom_beyond_cb=False)
 
-    num_res_clashes = pose_analysis.count_res_clashes_between_groups(pose, movable_residues, not_movable_residues, ignore_atom_beyond_cb=False)
-
-    if num_res_clashes > num_res_clashes_tolerance:
+    if num_res_clashes_ala > num_res_clashes_tolerance or num_res_clashes_val > 5:
         return False
 
     # Check buried unsatisfied hbonds
@@ -319,7 +321,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
 
             num_success += 1
 
-            #new_pose.dump_pdb(os.path.join(output_dir, 'debug_model_{0}.pdb.gz'.format(num_success))) ###DEBUG
+            #new_pose.dump_pdb(os.path.join(output_dir, 'debug_model_{0}_{1}_{2}.pdb.gz'.format(front_linker_length, back_linker_length, num_success))) ###DEBUG
             #if num_success > 100:exit() ###DEBUG
 
             if max_num_success:
