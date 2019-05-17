@@ -70,6 +70,50 @@ def find_bb_hbonds_involving_residues(pose, residues):
 
     return hbonds
 
+def align_helix_directions_by_minimization(pose, front_linker_start, front_helix_start, front_helix_stop, 
+        back_helix_start, back_helix_stop, back_linker_stop):
+    '''Align two half helices to a same direction.'''
+  
+    # Create the score function
+
+    sfxn = rosetta.core.scoring.ScoreFunctionFactory.create_score_function('none')
+    sfxn.set_weight(rosetta.core.scoring.base_pair_constraint, 1) #H-bond constraint
+    sfxn.set_weight(rosetta.core.scoring.angle_constraint, 10)
+    sfxn.set_weight(rosetta.core.scoring.omega, 1)
+    sfxn.set_weight(rosetta.core.scoring.rama_prepro, 1)
+
+    # Create constraints
+    
+    angle_constraint1 = constraint.get_angle_constraint(pose, [back_helix_stop, front_helix_start, front_helix_stop], 0, 0.1)
+    angle_constraint2 = constraint.get_angle_constraint(pose, [front_helix_start, back_helix_stop, back_helix_start], 0, 0.1)
+
+    linker_residues = list(range(front_linker_start, front_helix_start)) + list(range(back_helix_stop + 1, back_linker_stop + 1))
+    linker_hbonds = find_bb_hbonds_involving_residues(pose, linker_residues)
+    hbond_constraints = constraint.get_bb_hbond_constraint(linker_hbonds)
+
+    constraint.add_constraints_to_pose(pose, hbond_constraints + [angle_constraint1, angle_constraint2])
+
+    # Set movemap
+
+    mm = rosetta.core.kinematics.MoveMap()
+   
+    movable_residues = list(range(front_linker_start, front_helix_start)) + list(range(back_helix_stop + 1, back_linker_stop + 1))
+
+    for i in movable_residues:
+        mm.set_bb(i, True)
+   
+    # Set the minimization mover
+
+    min_opts = rosetta.core.optimization.MinimizerOptions( "lbfgs_armijo_nonmonotone", 0.01, True )
+    min_mover = rosetta.protocols.minimization_packing.MinMover()
+    min_mover.movemap(mm)
+    min_mover.min_options(min_opts)
+
+    # Apply the min mover
+
+    min_mover.score_function(sfxn)
+    min_mover.apply(pose)
+
 def close_helix_by_minimization(pose, movable_region_start, movable_region_end, helix_start, helix_end):
     '''Close a gap inside a helix by minimization.
     Return true if the gap could be closed.
@@ -216,11 +260,35 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
     # Find residue pair RMSDs. The last residue of the back helix is ignored
     # because it would be problematic if it is trimed.
 
-    res_pair_rmsds = [(r1, r2, residue_bb_rmsd_with_cutoff(pose, r1, r2)) for r1 in front_helix for r2 in back_helix[:-1]]
+    min_pair_rmsd = min([residue_bb_rmsd_with_cutoff(pose, r1, r2, ca_cutoff=5) for r1 in front_helix for r2 in back_helix[:-1]])
 
+    if min_pair_rmsd > 5: return None
+
+    front_helix_direction = residue_direction_vector(pose, front_helix[0])
+    for i in range(1, len(front_helix)):
+        front_helix_direction += residue_direction_vector(pose, front_helix[i])
+    front_helix_direction = front_helix_direction.normalized()
+
+    back_helix_direction = residue_direction_vector(pose, back_helix[0])
+    for i in range(1, len(back_helix)):
+        back_helix_direction += residue_direction_vector(pose, back_helix[i])
+    back_helix_direction = back_helix_direction.normalized()
+
+    if front_helix_direction.dot(back_helix_direction) < 0.5: return None
+
+    # Align the directions of the two half helices
+
+    new_pose = pose.clone()
+   
+    align_helix_directions_by_minimization(new_pose, front_linker_start, front_linker_start + front_linker_length + 1,
+            front_linker_start + front_linker_length + 10,
+            back_linker_start - 9, back_linker_start, back_linker_start + back_linker_length)
+   
     # Find residues with the lowest direction difference
 
-    res_pair_direction_dots = [(r[0], r[1], residue_direction_vector(pose, r[0]).dot(residue_direction_vector(pose, r[1]))) 
+    res_pair_rmsds = [(r1, r2, residue_bb_rmsd_with_cutoff(new_pose, r1, r2, ca_cutoff=1.5)) for r1 in front_helix for r2 in back_helix[:-1]]
+    
+    res_pair_direction_dots = [(r[0], r[1], residue_direction_vector(new_pose, r[0]).dot(residue_direction_vector(new_pose, r[1]))) 
             for r in res_pair_rmsds if r[2] < 3]
     if len(res_pair_direction_dots) == 0: return None
 
@@ -229,7 +297,6 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
     
     # Trim the helix and bridge the gap
     
-    new_pose = pose.clone()
     if not trim_helix_and_connect(new_pose, front_linker_start, back_helix[-1] + back_linker_length + 1, front_helix[0], 
             back_helix[-1], max_res_pair_direction_dot[0] + 1, max_res_pair_direction_dot[1], num_res_clashes_tolerance=num_res_clashes_tolerance):
         return None
