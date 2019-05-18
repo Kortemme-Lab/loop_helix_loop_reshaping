@@ -388,7 +388,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
 
             num_success += 1
 
-            #new_pose.dump_pdb(os.path.join(output_dir, 'debug_model_{0}_{1}_{2}.pdb.gz'.format(front_linker_length, back_linker_length, num_success))) ###DEBUG
+            #new_pose.dump_pdb(os.path.join(output_dir, 'debug_model_{0}_{1}_{2}_{3}.pdb.gz'.format(lhl_start, front_linker_length, back_linker_length, num_success))) ###DEBUG
             #if num_success > 100:exit() ###DEBUG
 
             if max_num_success:
