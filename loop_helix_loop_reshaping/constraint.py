@@ -37,3 +37,15 @@ def add_constraints_to_pose(pose, constraint_list):
         cset.add_constraint(c)
     
     pose.constraint_set(cset)
+
+def get_angle_constraint(pose, residues, angle, sd):
+    '''Get an angle constraint between three residues.
+    The angles are in radians. 
+    '''
+    hf = rosetta.core.scoring.func.HarmonicFunc(angle,  sd)
+    a_ids = [rosetta.core.id.AtomID(pose.residue(i).atom_index("CA"), i) for i in residues]
+
+    return rosetta.core.scoring.constraints.AngleConstraint(
+            a_ids[0], a_ids[1], a_ids[2], hf, rosetta.core.scoring.angle_constraint)
+
+
