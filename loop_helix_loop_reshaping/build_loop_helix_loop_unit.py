@@ -56,7 +56,8 @@ def residue_direction_vector(pose, res):
 
 def find_bb_hbonds_involving_residues(pose, residues):
     '''Find backbone hbonds involving a given set of residues.
-    An Hbond is defined as (donor_res, acceptor_res)
+    An Hbond is defined as (donor_res, acceptor_res).
+    Ignore the terminal residues.
     '''
     hbset = rosetta.core.scoring.hbonds.HBondSet(pose, bb_only=True)
     hbonds = []
@@ -64,6 +65,10 @@ def find_bb_hbonds_involving_residues(pose, residues):
     for i in range(1, hbset.nhbonds() + 1):
         acc = hbset.hbond(i).acc_res()
         don = hbset.hbond(i).don_res()
+
+        # Ignore terminal residues
+        if acc in [1, pose.size()] or don in [1, pose.size()]:
+            continue
 
         if acc in residues or don in residues:
             hbonds.append((don, acc))
