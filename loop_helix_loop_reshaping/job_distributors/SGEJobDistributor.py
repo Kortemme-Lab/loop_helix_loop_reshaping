@@ -31,7 +31,7 @@ class SGEJobDistributor(JobDistributor):
                         '-l', 'h_rt={0}'.format(time),
                         '-l', 'mem_free={0}G'.format(mem_free_GB),
                         '-l', 'scratch={0}G'.format(scratch_space_GB),
-                        '-l', 'arch=linux-x64',
+                        #'-l', 'arch=linux-x64',
                         '-o', job_output_path,
                         '-e', job_output_path,
                         './job_scripts/run_SGE_job.sh',
