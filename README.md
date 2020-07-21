@@ -60,7 +60,7 @@ Now that you know how to run the example, let's see how to do a production run f
 ```
 ./run_jobs.py my_output_data_set job_scripts/user/my_script.py
 ```
-The two LHL screening steps are usually too computationaly expensive to ran on a single computer. You'd better use a cluster. To submit a job to the UCSF QB3 cluster. Just do
+The two LHL screening steps are usually too computationaly expensive to ran on a single computer. You'd better use a cluster. To submit a job to the UCSF Wynton cluster. Just do
 ```
 ./run_jobs.py my_output_data_set job_scripts/user/my_script.py -d SGE -n 100
 ```
