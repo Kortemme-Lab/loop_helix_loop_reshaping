@@ -1,5 +1,13 @@
 # Loop Helix Loop Reshaping
-Loop-helix-loop (LHL) units are a type of structual motif that is highly varible in natural proteins and determines protein functions when a LHL unit is a part of a functional site. This repository provides PyRosetta based methods to simultaneously sample geometries and lengths of LHL units.
+Loop-helix-loop (LHL) units are a type of structual motif that is highly varible in natural proteins and determines protein functions when a LHL unit is a part of a functional site. This repository provides the PyRosetta based method, Loop-helix-loop unit combinatorial sampling (LUCS), to simultaneously sample geometries and lengths of LHL units.
+
+The LUCS method was applied successfully to design *de novo* protein fold families. The results are describe in this paper:
+```
+Pan, X., Thompson, M., Zhang, Y., Lin, L., Fraser, J.S., Kelly, M.J. and Kortemme, T., 2020. Expanding the space of protein geometries by computational design of de novo fold families.
+```
+
+A brief review for using the code can be found [here](https://github.com/Kortemme-Lab/loop_helix_loop_reshaping/blob/master/documentation/LUCS_method_code_and_usage.pdf).
+
 
 ## Installation
 I recommand to create a python virtual environment before installing the package.
