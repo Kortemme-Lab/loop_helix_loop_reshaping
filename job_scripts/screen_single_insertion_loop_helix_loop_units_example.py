@@ -10,7 +10,7 @@ from pyrosetta import rosetta
 import loop_helix_loop_reshaping as LHLR
 
 def screen(data_path, linker_database_path, input_pdb, input_insertion_points_file, num_jobs, job_id, max_num_success_each_db_pair=None, insertion_ids_to_screen=None,
-        num_res_clashes_tolerance=0):
+        num_res_clashes_tolerance=0, clash_probe_res='VAL'):
   
     # Load insertion points
     
@@ -43,7 +43,8 @@ def screen(data_path, linker_database_path, input_pdb, input_insertion_points_fi
 
         selected_lhl_units = LHLR.build_loop_helix_loop_unit.screen_all_loop_helix_loop_units(data_path, pose, insertion_points[insertion_id]['start'], 
                 insertion_points[insertion_id]['stop'], front_linker_dbs, back_linker_dbs, num_jobs, job_id,
-                max_num_success_each_db_pair=max_num_success_each_db_pair, num_res_clashes_tolerance=num_res_clashes_tolerance)
+                max_num_success_each_db_pair=max_num_success_each_db_pair, 
+                num_res_clashes_tolerance=num_res_clashes_tolerance, clash_probe_res=clash_probe_res)
 
         # Dump the selected LHL units 
 
@@ -66,5 +67,10 @@ if __name__ == '__main__':
     input_pdb = 'test_inputs/2lv8_cleaned.pdb'
     input_insertion_points_file = 'test_inputs/2lv8_insertion_points.json'
 
+    # Note: If the number of generated LHL units is too small, which often happens for helical proteins, 
+    # it's possible that the clash checking criteria is to stringent. 
+    # Try use a larger num_res_clashes_tolerance or use clash_probe_res='VAL'.
+
     screen(data_path, linker_database_path, input_pdb, input_insertion_points_file, 
-            num_jobs, job_id, max_num_success_each_db_pair=1, insertion_ids_to_screen=None, num_res_clashes_tolerance=0)
+            num_jobs, job_id, max_num_success_each_db_pair=1, insertion_ids_to_screen=None, 
+            num_res_clashes_tolerance=0, clash_probe_res='VAL')

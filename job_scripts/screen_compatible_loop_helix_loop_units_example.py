@@ -10,7 +10,8 @@ from pyrosetta import rosetta
 import loop_helix_loop_reshaping as LHLR
 
 
-def screen_compatible_loop_helix_loop_units(data_path, lhl_units_path, input_pdb, input_insertion_points_file, num_jobs, job_id, symmetric_lists=None):
+def screen_compatible_loop_helix_loop_units(data_path, lhl_units_path, input_pdb, input_insertion_points_file, num_jobs, job_id, 
+        symmetric_lists=None, clash_probe_res='VAL'):
     
     # Load insertion points
     
@@ -38,7 +39,8 @@ def screen_compatible_loop_helix_loop_units(data_path, lhl_units_path, input_pdb
     pose = rosetta.core.import_pose.pose_from_file(input_pdb)
 
     LHLR.screen_compatible_loop_helix_loop_units.screen_compatible_loop_helix_loop_units(
-            data_path, pose, insertion_points, lhl_units, num_jobs, job_id, symmetric_lists=symmetric_lists)
+            data_path, pose, insertion_points, lhl_units, num_jobs, job_id, 
+            symmetric_lists=symmetric_lists, clash_probe_res=clash_probe_res)
     
 
 
@@ -60,5 +62,5 @@ if __name__ == '__main__':
 
     screen_compatible_loop_helix_loop_units(data_path, lhl_units_path, 
             input_pdb, input_insertion_points_file, num_jobs, job_id,
-	    symmetric_lists=None)
+	    symmetric_lists=None, clash_probe_res='VAL')
 

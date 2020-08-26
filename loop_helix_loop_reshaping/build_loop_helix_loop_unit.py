@@ -175,7 +175,8 @@ def close_helix_by_minimization(pose, movable_region_start, movable_region_end, 
     
     return True
 
-def trim_helix_and_connect(original_pose, movable_region_start, movable_region_end, helix_start, helix_end, trim_start, trim_end, num_res_clashes_tolerance=0):
+def trim_helix_and_connect(original_pose, movable_region_start, movable_region_end, helix_start, helix_end, trim_start, trim_end,
+        num_res_clashes_tolerance=0, clash_probe_res='VAL'):
     '''Trim a part of a helix and connect the rest of the helix.
     Return true if a good connection could be made.
     '''
@@ -221,7 +222,7 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
     simple_pose_moves.mutate_residues(pose, helix_residues + not_movable_residues, ['ALA'] * len(helix_residues + not_movable_residues))
     num_res_clashes_ala = pose_analysis.count_res_clashes_between_groups(pose, movable_residues, not_movable_residues, ignore_atom_beyond_cb=False)
 
-    simple_pose_moves.mutate_residues(pose, helix_residues + not_movable_residues, ['VAL'] * len(helix_residues + not_movable_residues))
+    simple_pose_moves.mutate_residues(pose, helix_residues + not_movable_residues, [clash_probe_res] * len(helix_residues + not_movable_residues))
     num_res_clashes_val = pose_analysis.count_res_clashes_between_groups(pose, movable_residues, not_movable_residues, ignore_atom_beyond_cb=False)
 
     if num_res_clashes_ala > num_res_clashes_tolerance or num_res_clashes_val > 5:
@@ -244,7 +245,7 @@ def trim_helix_and_connect(original_pose, movable_region_start, movable_region_e
 
     return True
 
-def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_linker_start, num_res_clashes_tolerance=0):
+def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_linker_start, num_res_clashes_tolerance=0, clash_probe_res='VAL'):
     '''Test if a pair of linkers could be used for form a loop-helix-loop unit.
     Return None if the pair of linkers cannot support a helix. Otherwise
     return (new_pose, reshaped_region_start, reshaped_region_stop).
@@ -303,7 +304,8 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
     # Trim the helix and bridge the gap
     
     if not trim_helix_and_connect(new_pose, front_linker_start, back_helix[-1] + back_linker_length + 1, front_helix[0], 
-            back_helix[-1], max_res_pair_direction_dot[0] + 1, max_res_pair_direction_dot[1], num_res_clashes_tolerance=num_res_clashes_tolerance):
+            back_helix[-1], max_res_pair_direction_dot[0] + 1, max_res_pair_direction_dot[1], 
+            num_res_clashes_tolerance=num_res_clashes_tolerance, clash_probe_res=clash_probe_res):
         return None
    
     reshaped_region_start = front_linker_start
@@ -316,7 +318,7 @@ def test_linker_pairs(pose, front_linker, back_linker, front_linker_start, back_
     return new_pose, reshaped_region_start, reshaped_region_stop, cutpoint_residue
 
 def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id, max_num_success=None,
-        num_res_clashes_tolerance=0, dump_trajectory=False):
+        num_res_clashes_tolerance=0, clash_probe_res='VAL', dump_trajectory=False):
     '''Screen loop helix loop units for fixed length linkers.
     Return the torsions of the selected LHL units.
     '''
@@ -360,7 +362,8 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
                 print('Built {0} models after screening {1}/{2} pairs of linkers.'.format(num_success, i // num_jobs, len(tasks) // num_jobs + 1)) 
             
             test_result = test_linker_pairs(pose, front_db[task[0]], back_db[task[1]], 
-                    front_linker_start, back_linker_start, num_res_clashes_tolerance=num_res_clashes_tolerance)
+                    front_linker_start, back_linker_start, 
+                    num_res_clashes_tolerance=num_res_clashes_tolerance, clash_probe_res=clash_probe_res)
             
             # Dump trajectory
 
@@ -403,7 +406,7 @@ def screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, original_po
     return selected_lhl_units
             
 def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, front_linker_dbs, back_linker_dbs, num_jobs=1, job_id=0, max_num_success_each_db_pair=None,
-        num_res_clashes_tolerance=0, dump_trajectory=False):
+        num_res_clashes_tolerance=0, clash_probe_res='VAL', dump_trajectory=False):
     '''Screen all loop helix loop units and record all possible designs.
     Return the torsions of the selected LHL units.
     '''
@@ -419,6 +422,7 @@ def screen_all_loop_helix_loop_units(output_dir, pose, lhl_start, lhl_stop, fron
         for back_db in back_linker_dbs:
         
             selected_lhl_units += screen_loop_helix_loop_units_for_fixed_linker_length(output_dir, pose, lhl_start, lhl_stop, front_db, back_db, num_jobs, job_id, 
-                    max_num_success=max_num_success_each_db_pair, num_res_clashes_tolerance=num_res_clashes_tolerance, dump_trajectory=dump_trajectory)
+                    max_num_success=max_num_success_each_db_pair, num_res_clashes_tolerance=num_res_clashes_tolerance, clash_probe_res=clash_probe_res,
+                    dump_trajectory=dump_trajectory)
 
     return selected_lhl_units

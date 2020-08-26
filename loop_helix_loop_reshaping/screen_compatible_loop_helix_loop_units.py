@@ -90,14 +90,14 @@ def insert_terminal_loop_helix_loop_unit(pose, insertion_points, insertion_id, l
             simple_pose_moves.delete_region(pose, pose.size() - overhanging_loop_length + 1, pose.size())
         simple_pose_moves.update_insertion_points(insertion_points, insertion_id, lhl_length - overhanging_loop_length)
 
-def check_clashes_between_lhl_units(pose, insertion_points):
+def check_clashes_between_lhl_units(pose, insertion_points, clash_probe_res='VAL'):
     '''Check the clashes between LHL units.
     Return True if there are no clashes between inserted LHL units.
     '''
-    # Mutate all inserted residues to VAL
+    # Mutate all inserted residues to clash_probe_res
 
     inserted_residues = [i for ip in insertion_points for i in range(ip['start'] + 1, ip['stop'])]
-    simple_pose_moves.mutate_residues(pose, inserted_residues, ['VAL'] * len(inserted_residues))
+    simple_pose_moves.mutate_residues(pose, inserted_residues, [clash_probe_res] * len(inserted_residues))
 
     # Check clashes between LHL units
 
@@ -112,7 +112,8 @@ def check_clashes_between_lhl_units(pose, insertion_points):
 
     return True
 
-def screen_compatible_loop_helix_loop_units(output_dir, pose, insertion_points, lhl_units, num_jobs, job_id, symmetric_lists=None, max_num_to_screen=None):
+def screen_compatible_loop_helix_loop_units(output_dir, pose, insertion_points, lhl_units, num_jobs, job_id, 
+        symmetric_lists=None, max_num_to_screen=None, clash_probe_res='VAL'):
     '''Get LHL units that are compatible with each other.
     Dump pdb files of the compatible structures and a json
     file for the insertion points.
@@ -174,7 +175,7 @@ def screen_compatible_loop_helix_loop_units(output_dir, pose, insertion_points, 
        
         # Check clashes
 
-        if not check_clashes_between_lhl_units(pose, insertion_points):
+        if not check_clashes_between_lhl_units(pose, insertion_points, clash_probe_res=clash_probe_res):
             continue
         
         # Dump the outputs
