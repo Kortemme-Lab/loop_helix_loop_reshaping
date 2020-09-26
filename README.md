@@ -46,7 +46,7 @@ The second step is screening LHL units that at each insertion points individuall
 ```
 ./run_jobs.py test_screen_single_insertion_loop_helix_loop_units job_scripts/screen_single_insertion_loop_helix_loop_units_example.py
 ```
-The command will create the directory `data/test_screen_single_insertion_loop_helix_loop_units` and dump 2 json libraries for LHL units at the two insertion points.
+The command will create the directory `data/test_screen_single_insertion_loop_helix_loop_units` and dump 2 json libraries for LHL units at the two insertion points. In a production run, you would like to set `max_num_success_each_db_pair=None` in the script.
 
 ### Screen compatible loop helix loop units
 The last step is to get combinations of LHL units that don't clash against each other.
