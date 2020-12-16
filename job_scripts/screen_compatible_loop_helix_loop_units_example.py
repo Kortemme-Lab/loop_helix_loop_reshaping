@@ -60,6 +60,9 @@ if __name__ == '__main__':
     input_pdb = 'test_inputs/2lv8_cleaned.pdb'
     input_insertion_points_file = 'test_inputs/2lv8_insertion_points.json'
 
+    # Note: If you have a large number of combinations of LHL units, use the max_num_to_screen argument of the 
+    # LHLR.screen_compatible_loop_helix_loop_units.screen_compatible_loop_helix_loop_units()
+    # function to cap the number of combinations to screen. Otherwise LUCS may fill up your disk with millions of files.
     screen_compatible_loop_helix_loop_units(data_path, lhl_units_path, 
             input_pdb, input_insertion_points_file, num_jobs, job_id,
 	    symmetric_lists=None, clash_probe_res='VAL')
